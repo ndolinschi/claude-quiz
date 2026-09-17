@@ -11,7 +11,6 @@ export function useCountdown(
 
   useEffect(() => {
     if (!enabled || deadline == null) return;
-    setNow(Date.now());
     const id = window.setInterval(() => setNow(Date.now()), 250);
     return () => window.clearInterval(id);
   }, [deadline, enabled]);

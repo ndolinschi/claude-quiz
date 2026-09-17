@@ -1,10 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, ChevronRight, Clock, Flag, X } from "lucide-react";
+import { Check, ChevronRight, Clock, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { useCountdown } from "@/hooks/use-countdown";
 import { formatClock, type SetupConfig } from "@/lib/quiz";
@@ -19,8 +27,9 @@ export function SessionScreen({
   startedAt,
   deadline,
   onSelect,
+  onSubmitAnswer,
   onNext,
-  onQuit,
+  onCancel,
   onExpire,
 }: {
   items: Question[];
@@ -30,18 +39,24 @@ export function SessionScreen({
   startedAt: number;
   deadline: number | null;
   onSelect: (questionId: string, key: string) => void;
+  onSubmitAnswer: (question: Question, selectedKey: string) => void;
   onNext: () => void;
-  onQuit: () => void;
+  onCancel: () => void;
   onExpire: () => void;
 }) {
   const question = items[index];
   const selected = answers[question.id] ?? "";
   const instant = config.feedback === "instant";
-  const [revealed, setRevealed] = useState(false);
+  const [prevQuestionId, setPrevQuestionId] = useState(question.id);
+  const [revealed, setRevealed] = useState(() =>
+    Boolean(instant && answers[question.id])
+  );
+  const [cancelOpen, setCancelOpen] = useState(false);
 
-  useEffect(() => {
-    setRevealed(false);
-  }, [question.id]);
+  if (question.id !== prevQuestionId) {
+    setPrevQuestionId(question.id);
+    setRevealed(Boolean(instant && answers[question.id]));
+  }
 
   const remainingMs = useCountdown(deadline, deadline != null, onExpire);
   const [now, setNow] = useState(() => Date.now());
@@ -59,14 +74,19 @@ export function SessionScreen({
     if (instant) {
       if (!revealed) {
         if (!selected) return;
+        onSubmitAnswer(question, selected);
         setRevealed(true);
         return;
       }
       onNext();
       return;
     }
+    // Exam mode: advance records answer if selected
+    if (selected) {
+      onSubmitAnswer(question, selected);
+    }
     onNext();
-  }, [instant, onNext, revealed, selected]);
+  }, [instant, onNext, onSubmitAnswer, question, revealed, selected]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -97,6 +117,8 @@ export function SessionScreen({
 
   const timerUrgent =
     remainingMs != null && remainingMs < 60_000 && remainingMs > 0;
+
+  const answeredCount = Object.keys(answers).length;
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col overflow-x-hidden px-3 pt-3 sm:px-4 sm:pt-5">
@@ -129,16 +151,44 @@ export function SessionScreen({
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 px-2.5"
-            onClick={onQuit}
+            className="h-9 px-2.5 text-muted-foreground hover:text-foreground"
+            onClick={() => setCancelOpen(true)}
           >
-            <Flag className="size-3.5" />
-            <span className="hidden sm:inline">End</span>
+            <X className="size-3.5" />
+            <span className="hidden sm:inline">Cancel</span>
           </Button>
         </div>
       </div>
 
       <Progress value={displayProgress} className="mb-4 h-1.5" />
+
+      {/* Cancel confirmation dialog */}
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel quiz?</DialogTitle>
+            <DialogDescription>
+              Your {answeredCount} answer{answeredCount === 1 ? "" : "s"} submitted
+              so far will be kept in your theme coverage and daily quota, but
+              this active session will end.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setCancelOpen(false)}>
+              Keep practicing
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setCancelOpen(false);
+                onCancel();
+              }}
+            >
+              Cancel session
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card className="mb-3 flex-1 overflow-hidden bg-card/95 shadow-sm">
         <CardContent className="px-3.5 pt-1 pb-4 sm:px-5">

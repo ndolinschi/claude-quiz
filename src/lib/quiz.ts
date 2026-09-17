@@ -202,3 +202,92 @@ export function domainBreakdown(
     }))
     .sort((a, b) => b.total - a.total || a.domain.localeCompare(b.domain));
 }
+
+export type CoverageRow = {
+  name: string;
+  total: number;
+  answered: number;
+  percent: number;
+  correct: number;
+};
+
+export function getDomainCoverage(
+  answered: Record<string, { correct: boolean }>
+): CoverageRow[] {
+  return DOMAIN_LIST.map((domain) => {
+    const questions = QUESTION_BANK.filter((q) => q.domains?.includes(domain));
+    const total = questions.length;
+    let answeredCount = 0;
+    let correctCount = 0;
+    for (const q of questions) {
+      const rec = answered[q.id];
+      if (rec) {
+        answeredCount += 1;
+        if (rec.correct) correctCount += 1;
+      }
+    }
+    const percent = total ? Math.round((answeredCount / total) * 100) : 0;
+    return {
+      name: domain,
+      total,
+      answered: answeredCount,
+      percent,
+      correct: correctCount,
+    };
+  });
+}
+
+export function getTopTagCoverage(
+  answered: Record<string, { correct: boolean }>,
+  limit: number = 12
+): CoverageRow[] {
+  return ALL_TAGS.slice(0, limit).map((tag) => {
+    const questions = QUESTION_BANK.filter((q) => q.tags?.includes(tag));
+    const total = questions.length;
+    let answeredCount = 0;
+    let correctCount = 0;
+    for (const q of questions) {
+      const rec = answered[q.id];
+      if (rec) {
+        answeredCount += 1;
+        if (rec.correct) correctCount += 1;
+      }
+    }
+    const percent = total ? Math.round((answeredCount / total) * 100) : 0;
+    return {
+      name: tag,
+      total,
+      answered: answeredCount,
+      percent,
+      correct: correctCount,
+    };
+  });
+}
+
+export function getOverallCoverage(
+  answered: Record<string, { correct: boolean }>
+): {
+  total: number;
+  answered: number;
+  percent: number;
+  correct: number;
+} {
+  const total = TOTAL_QUESTIONS;
+  let answeredCount = 0;
+  let correctCount = 0;
+  for (const q of QUESTION_BANK) {
+    const rec = answered[q.id];
+    if (rec) {
+      answeredCount += 1;
+      if (rec.correct) correctCount += 1;
+    }
+  }
+  const percent = total ? Math.round((answeredCount / total) * 100) : 0;
+  return {
+    total,
+    answered: answeredCount,
+    percent,
+    correct: correctCount,
+  };
+}
+

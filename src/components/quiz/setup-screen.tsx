@@ -6,8 +6,10 @@ import {
   Filter,
   FlaskConical,
   Keyboard,
+  Play,
   Search,
   Shuffle,
+  Sparkles,
   Timer,
   X,
 } from "lucide-react";
@@ -36,6 +38,10 @@ import {
   type SetupConfig,
   type TimePreset,
 } from "@/lib/quiz";
+import type { ProgressStore } from "@/lib/progress-store";
+import { ProgressPanel } from "./progress-panel";
+import { PaywallCard } from "./paywall-card";
+import { DebugProToggle } from "./debug-pro-toggle";
 import { cn } from "@/lib/utils";
 
 const COUNT_PRESETS: { value: CountPreset; label: string }[] = [
@@ -128,14 +134,30 @@ export function SetupScreen({
   config,
   onChange,
   onStart,
+  store,
+  isPro,
+  remainingQuota,
+  onUnlockDebugPro,
+  onResumeSession,
+  onDiscardResume,
 }: {
   config: SetupConfig;
   onChange: (next: SetupConfig) => void;
   onStart: () => void;
+  store: ProgressStore;
+  isPro: boolean;
+  remainingQuota: number;
+  onUnlockDebugPro: (enabled: boolean) => void;
+  onResumeSession?: () => void;
+  onDiscardResume?: () => void;
 }) {
   const [tagQuery, setTagQuery] = useState("");
   const pool = useMemo(() => filterPool(config), [config]);
   const count = resolveCount(config, pool.length);
+
+  const isQuotaExhausted = !isPro && remainingQuota <= 0;
+  const isClamped = !isPro && remainingQuota > 0 && remainingQuota < count;
+  const effectiveCount = isClamped ? remainingQuota : count;
 
   const filteredTags = useMemo(() => {
     const q = tagQuery.trim().toLowerCase();
@@ -177,6 +199,54 @@ export function SetupScreen({
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:pb-12 sm:pt-10">
+      {/* Resume Banner */}
+      {store.activeSession && (
+        <div className="mb-6 rounded-2xl border border-copper/35 bg-gradient-to-r from-copper/10 via-card to-copper/5 p-4 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className="border-copper/40 bg-copper/15 font-mono text-[10px] text-copper uppercase"
+                >
+                  Unfinished session
+                </Badge>
+                <span className="text-sm font-semibold text-foreground">
+                  In-progress drill detected
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Question {store.activeSession.index + 1} of{" "}
+                {store.activeSession.questionIds.length} ·{" "}
+                {Object.keys(store.activeSession.answers).length} answered
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {onDiscardResume && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onDiscardResume}
+                  className="h-9 rounded-full text-xs text-muted-foreground"
+                >
+                  Discard
+                </Button>
+              )}
+              {onResumeSession && (
+                <Button
+                  size="sm"
+                  onClick={onResumeSession}
+                  className="h-9 rounded-full bg-copper text-white hover:bg-copper/90 text-xs font-semibold"
+                >
+                  <Play className="size-3.5" />
+                  Resume
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="mb-6 text-center sm:mb-8">
         <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl border border-copper/30 bg-[radial-gradient(circle_at_30%_20%,#e8b07a,transparent_55%),linear-gradient(160deg,#8a3b16,#c45c26)] text-[#f8ead6] shadow-[0_10px_30px_-12px_rgba(138,59,22,0.65)] sm:size-16">
           <FlaskConical className="size-7 sm:size-8" strokeWidth={1.6} />
@@ -192,6 +262,49 @@ export function SetupScreen({
           mode — built for mobile first.
         </p>
       </header>
+
+      {/* Daily Quota Status Banner */}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/70 bg-card/85 px-4 py-2.5 shadow-xs">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs text-muted-foreground">
+            Daily quota:
+          </span>
+          {isPro ? (
+            <Badge
+              variant="outline"
+              className="border-copper/40 bg-copper/15 font-mono text-[10px] font-semibold text-copper"
+            >
+              <Sparkles className="mr-1 size-3" />
+              Pro Unlimited
+            </Badge>
+          ) : (
+            <span className="font-mono text-xs font-semibold text-foreground">
+              {store.questionsToday} / 50 questions used today
+            </span>
+          )}
+        </div>
+        {!isPro && (
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "font-mono text-xs font-medium",
+                remainingQuota > 10
+                  ? "text-muted-foreground"
+                  : remainingQuota > 0
+                    ? "text-copper"
+                    : "font-semibold text-destructive"
+              )}
+            >
+              {remainingQuota} remaining
+            </span>
+            {remainingQuota <= 0 && (
+              <Badge variant="destructive" className="font-mono text-[10px]">
+                Exhausted
+              </Badge>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="grid gap-3.5 sm:gap-4">
         {/* How to use */}
@@ -244,6 +357,13 @@ export function SetupScreen({
             </ol>
           </CardContent>
         </Card>
+
+        {/* Theme coverage progress panel */}
+        <ProgressPanel
+          store={store}
+          isPro={isPro}
+          onUnlockPro={() => onUnlockDebugPro(true)}
+        />
 
         {/* Domains */}
         <Card className="bg-card/95 shadow-sm">
@@ -375,8 +495,9 @@ export function SetupScreen({
           <CardHeader className="pb-2">
             <CardTitle className="text-base sm:text-lg">Session size</CardTitle>
             <CardDescription>
-              Drawing {count} from the filtered pool
+              Drawing {effectiveCount} from the filtered pool
               {pool.length !== count ? ` (${pool.length} available)` : ""}.
+              {isClamped && ` Clamped from ${count} due to daily quota (${remainingQuota} remaining).`}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pb-4">
@@ -431,6 +552,22 @@ export function SetupScreen({
                   }}
                   className="py-1"
                 />
+              </div>
+            )}
+            {isClamped && (
+              <div className="rounded-xl border border-copper/35 bg-copper/5 p-3 text-xs text-muted-foreground">
+                <p>
+                  <strong className="text-foreground">Daily quota limit:</strong>{" "}
+                  You have {remainingQuota} questions remaining today on Free.
+                  Your session is clamped to {remainingQuota} questions.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => onUnlockDebugPro(true)}
+                  className="mt-1.5 font-semibold text-copper underline underline-offset-2 hover:text-copper/80"
+                >
+                  Unlock Pro for unlimited questions
+                </button>
               </div>
             )}
           </CardContent>
@@ -500,23 +637,40 @@ export function SetupScreen({
             </div>
           </CardContent>
         </Card>
+
+        {/* Soft Paywall if Quota Exhausted */}
+        {isQuotaExhausted && (
+          <PaywallCard onUnlockDebugPro={() => onUnlockDebugPro(true)} />
+        )}
+
+        {/* Debug Pro Toggle */}
+        <DebugProToggle
+          debugPro={store.debugPro}
+          onToggle={onUnlockDebugPro}
+          className="mt-2"
+        />
       </div>
 
       {/* Sticky start CTA — mobile critical */}
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/60 bg-background/90 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:static sm:mt-6 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-2 sm:flex-row sm:items-center">
           <p className="hidden text-center font-mono text-xs text-muted-foreground sm:block sm:flex-1 sm:text-left">
-            {count} question{count === 1 ? "" : "s"}
+            {effectiveCount} question{effectiveCount === 1 ? "" : "s"}
             {config.timeMinutes ? ` · ${config.timeMinutes}m` : ""}
             {config.feedback === "exam" ? " · exam" : " · instant"}
+            {isClamped ? " · (clamped)" : ""}
           </p>
           <Button
             size="lg"
             className="h-12 w-full rounded-full text-base font-semibold sm:w-auto sm:min-w-48"
             onClick={onStart}
-            disabled={pool.length === 0}
+            disabled={pool.length === 0 || isQuotaExhausted}
           >
-            Start session
+            {isQuotaExhausted
+              ? "Daily quota reached (50/50)"
+              : isClamped
+                ? `Start (${effectiveCount} questions)`
+                : "Start session"}
           </Button>
         </div>
       </div>

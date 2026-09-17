@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Check, RotateCcw, Shuffle, X } from "lucide-react";
+import { Check, RotateCcw, Shuffle, Sparkles, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,8 @@ export function ResultsScreen({
   answers,
   config,
   elapsedMs,
+  isPro,
+  onUnlockPro,
   onRetry,
   onReshuffle,
   onSetup,
@@ -28,6 +30,8 @@ export function ResultsScreen({
   answers: Record<string, string>;
   config: SetupConfig;
   elapsedMs: number;
+  isPro?: boolean;
+  onUnlockPro?: () => void;
   onRetry: () => void;
   onReshuffle: () => void;
   onSetup: () => void;
@@ -120,6 +124,25 @@ export function ResultsScreen({
           </Badge>
           <Badge variant="outline">{stats.blank} skipped</Badge>
         </div>
+        {isPro ? (
+          <p className="mt-3.5 flex items-center justify-center gap-1.5 text-xs font-medium text-copper">
+            <Sparkles className="size-3.5" />
+            Session saved to your Pro history
+          </p>
+        ) : (
+          <div className="mt-3.5 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <span>Session history is saved for Pro members</span>
+            {onUnlockPro && (
+              <button
+                type="button"
+                onClick={onUnlockPro}
+                className="font-semibold text-copper underline underline-offset-2 hover:text-copper/80"
+              >
+                Enable Debug Pro
+              </button>
+            )}
+          </div>
+        )}
       </header>
 
       <div className="mb-8 flex flex-col gap-2 sm:flex-row">
