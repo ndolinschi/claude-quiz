@@ -1,5 +1,7 @@
-import type { Question } from "@/data/types";
+import type { Domain, Question } from "@/data/types";
 import bank from "@/data/questions.json";
+
+export type { Domain };
 
 export const QUESTION_BANK = bank as Question[];
 export const TOTAL_QUESTIONS = QUESTION_BANK.length;
@@ -15,6 +17,47 @@ export const SET_COUNTS: Record<number, number> = PRACTICE_SETS.reduce(
   {} as Record<number, number>
 );
 
+export const DOMAIN_LIST: Domain[] = [
+  "Tools",
+  "MCP",
+  "Subagents",
+  "Sessions",
+  "Memory/CLAUDE.md",
+  "Permissions",
+  "Hooks",
+  "Skills",
+  "Prompting",
+  "Architecture",
+];
+
+export const DOMAIN_COUNTS: Record<Domain, number> = DOMAIN_LIST.reduce(
+  (acc, d) => {
+    acc[d] = QUESTION_BANK.filter((q) => q.domains?.includes(d)).length;
+    return acc;
+  },
+  {} as Record<Domain, number>
+);
+
+export const ALL_TAGS: string[] = (() => {
+  const counts = new Map<string, number>();
+  for (const q of QUESTION_BANK) {
+    for (const t of q.tags || []) {
+      counts.set(t, (counts.get(t) || 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([t]) => t);
+})();
+
+export const TAG_COUNTS: Record<string, number> = ALL_TAGS.reduce(
+  (acc, t) => {
+    acc[t] = QUESTION_BANK.filter((q) => q.tags?.includes(t)).length;
+    return acc;
+  },
+  {} as Record<string, number>
+);
+
 export type CountPreset = 10 | 25 | 50 | 100 | "all" | "custom";
 export type TimePreset = 0 | 15 | 30 | 45 | 60 | 90;
 export type FeedbackMode = "instant" | "exam";
@@ -27,6 +70,8 @@ export type SetupConfig = {
   shuffleChoices: boolean;
   feedback: FeedbackMode;
   sets: number[];
+  domains: Domain[];
+  tags: string[];
 };
 
 export const DEFAULT_SETUP: SetupConfig = {
@@ -37,6 +82,8 @@ export const DEFAULT_SETUP: SetupConfig = {
   shuffleChoices: false,
   feedback: "instant",
   sets: [],
+  domains: [],
+  tags: [],
 };
 
 export function shuffle<T>(items: T[]): T[] {
@@ -48,10 +95,26 @@ export function shuffle<T>(items: T[]): T[] {
   return next;
 }
 
+export function filterPool(config: Pick<SetupConfig, "sets" | "domains" | "tags">): Question[] {
+  let pool = QUESTION_BANK;
+  if (config.sets.length) {
+    const selected = new Set(config.sets);
+    pool = pool.filter((q) => selected.has(q.set));
+  }
+  if (config.domains.length) {
+    const selected = new Set(config.domains);
+    pool = pool.filter((q) => (q.domains || []).some((d) => selected.has(d)));
+  }
+  if (config.tags.length) {
+    const selected = new Set(config.tags);
+    pool = pool.filter((q) => (q.tags || []).some((t) => selected.has(t)));
+  }
+  return pool;
+}
+
+/** @deprecated use filterPool */
 export function poolForSets(sets: number[]): Question[] {
-  if (!sets.length) return QUESTION_BANK;
-  const selected = new Set(sets);
-  return QUESTION_BANK.filter((q) => selected.has(q.set));
+  return filterPool({ sets, domains: [], tags: [] });
 }
 
 export function resolveCount(config: SetupConfig, poolSize: number): number {
@@ -63,7 +126,7 @@ export function resolveCount(config: SetupConfig, poolSize: number): number {
 }
 
 export function buildSession(config: SetupConfig): Question[] {
-  let pool = poolForSets(config.sets);
+  let pool = filterPool(config);
   pool = config.shuffleQuestions ? shuffle(pool) : [...pool];
   const n = resolveCount(config, pool.length);
   const picked = pool.slice(0, n);
@@ -99,4 +162,43 @@ export function scoreSession(
     ? Math.round((correct / items.length) * 100)
     : 0;
   return { correct, wrong, blank, percent, total: items.length };
+}
+
+export type DomainBreakdownRow = {
+  domain: Domain;
+  total: number;
+  correct: number;
+  wrong: number;
+  blank: number;
+  percent: number;
+};
+
+export function domainBreakdown(
+  items: Question[],
+  answers: Record<string, string>
+): DomainBreakdownRow[] {
+  const map = new Map<Domain, DomainBreakdownRow>();
+  for (const q of items) {
+    const domains = q.domains?.length ? q.domains : (["Architecture"] as Domain[]);
+    const chosen = answers[q.id];
+    const status =
+      !chosen ? "blank" : chosen === q.answer ? "correct" : "wrong";
+    for (const d of domains) {
+      let row = map.get(d);
+      if (!row) {
+        row = { domain: d, total: 0, correct: 0, wrong: 0, blank: 0, percent: 0 };
+        map.set(d, row);
+      }
+      row.total += 1;
+      if (status === "correct") row.correct += 1;
+      else if (status === "wrong") row.wrong += 1;
+      else row.blank += 1;
+    }
+  }
+  return [...map.values()]
+    .map((r) => ({
+      ...r,
+      percent: r.total ? Math.round((r.correct / r.total) * 100) : 0,
+    }))
+    .sort((a, b) => b.total - a.total || a.domain.localeCompare(b.domain));
 }

@@ -99,42 +99,68 @@ export function SessionScreen({
     remainingMs != null && remainingMs < 60_000 && remainingMs > 0;
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 py-4 sm:py-6">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="border-copper/30 font-mono">
-            Set {question.set}
-          </Badge>
-          <span className="font-mono text-xs text-muted-foreground">
-            {index + 1} / {items.length}
+    <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col overflow-x-hidden px-3 pt-3 sm:px-4 sm:pt-5">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="font-mono text-xs tabular-nums text-muted-foreground">
+            {index + 1}
+            <span className="mx-0.5 opacity-50">/</span>
+            {items.length}
           </span>
+          {question.domains?.[0] && (
+            <Badge
+              variant="outline"
+              className="max-w-[9.5rem] truncate border-copper/25 bg-card/80 text-[10px] sm:max-w-none sm:text-xs"
+            >
+              {question.domains[0]}
+            </Badge>
+          )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5">
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 font-mono text-sm tabular-nums",
-              timerUrgent ? "text-destructive" : "text-foreground"
+              "inline-flex items-center gap-1 font-mono text-sm tabular-nums",
+              timerUrgent ? "font-semibold text-destructive" : "text-foreground"
             )}
           >
-            <Clock className="size-3.5" />
+            <Clock className="size-3.5 opacity-70" />
             {timerLabel}
           </span>
-          <Button variant="ghost" size="sm" onClick={onQuit}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 px-2.5"
+            onClick={onQuit}
+          >
             <Flag className="size-3.5" />
-            End
+            <span className="hidden sm:inline">End</span>
           </Button>
         </div>
       </div>
 
-      <Progress value={displayProgress} className="mb-5" />
+      <Progress value={displayProgress} className="mb-4 h-1.5" />
 
-      <Card className="flex-1 bg-card/95 shadow-sm">
-        <CardContent className="pt-1">
-          <p className="font-heading text-lg leading-relaxed text-pretty text-ink sm:text-xl">
+      <Card className="mb-3 flex-1 overflow-hidden bg-card/95 shadow-sm">
+        <CardContent className="px-3.5 pt-1 pb-4 sm:px-5">
+          <p className="font-heading text-[1.05rem] leading-relaxed text-pretty break-words text-ink sm:text-xl">
             {question.stem}
           </p>
 
-          <div className="mt-6 grid gap-2">
+          {(question.tags?.length ?? 0) > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1">
+              {question.tags.slice(0, 4).map((t) => (
+                <Badge
+                  key={t}
+                  variant="secondary"
+                  className="h-5 font-mono text-[10px] font-normal"
+                >
+                  {t}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-5 grid gap-2.5">
             {question.choices.map((choice) => {
               const isSel = selected === choice.key;
               const showMark = revealed;
@@ -146,8 +172,9 @@ export function SessionScreen({
                   disabled={revealed}
                   onClick={() => onSelect(question.id, choice.key)}
                   className={cn(
-                    "flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-all sm:px-4",
+                    "flex w-full min-h-14 items-start gap-3 rounded-2xl border px-3.5 py-3.5 text-left transition-all sm:min-h-12 sm:px-4",
                     "focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+                    "active:scale-[0.99]",
                     !showMark &&
                       (isSel
                         ? "border-primary bg-primary/8 shadow-[inset_0_0_0_1px_var(--primary)]"
@@ -163,14 +190,12 @@ export function SessionScreen({
                 >
                   <span
                     className={cn(
-                      "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md font-mono text-sm font-semibold",
+                      "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg font-mono text-sm font-semibold",
                       !showMark &&
                         (isSel
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-foreground"),
-                      showMark &&
-                        isAns &&
-                        "bg-correct text-white",
+                      showMark && isAns && "bg-correct text-white",
                       showMark &&
                         isSel &&
                         !isAns &&
@@ -179,7 +204,7 @@ export function SessionScreen({
                   >
                     {choice.key}
                   </span>
-                  <span className="min-w-0 flex-1 text-[15px] leading-snug">
+                  <span className="min-w-0 flex-1 text-[15px] leading-snug break-words">
                     {choice.text}
                   </span>
                   {showMark && isAns && (
@@ -196,7 +221,7 @@ export function SessionScreen({
           {revealed && (
             <div
               className={cn(
-                "mt-5 rounded-xl border px-4 py-3",
+                "mt-5 rounded-2xl border px-4 py-3.5",
                 isCorrect
                   ? "border-correct/30 bg-correct/8"
                   : "border-destructive/25 bg-destructive/6"
@@ -206,8 +231,8 @@ export function SessionScreen({
                 {isCorrect ? "Correct" : `Answer: ${question.answer}`}
               </p>
               {question.explanation ? (
-                <p className="text-sm leading-relaxed text-pretty text-foreground/85">
-                  {question.explanation}
+                <p className="text-sm leading-relaxed text-pretty break-words text-foreground/85">
+                  {question.explanation.replace(/\s*Domain\(s\):.*$/i, "")}
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground">
@@ -219,28 +244,30 @@ export function SessionScreen({
         </CardContent>
       </Card>
 
-      <div className="sticky bottom-0 mt-4 flex items-center justify-between gap-3 bg-background/80 py-3 backdrop-blur-md">
-        <p className="hidden text-xs text-muted-foreground sm:block">
-          Press A–D to choose · Enter to{" "}
-          {instant ? (revealed ? "continue" : "submit") : "continue"}
-        </p>
-        <Button
-          size="lg"
-          className="ml-auto h-11 rounded-full px-6"
-          onClick={submitOrAdvance}
-          disabled={instant ? !selected && !revealed : false}
-        >
-          {instant
-            ? revealed
-              ? last
+      <div className="sticky bottom-0 z-10 -mx-3 mt-auto border-t border-border/50 bg-background/90 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:-mx-4 sm:px-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="hidden text-xs text-muted-foreground sm:block">
+            A–D to choose · Enter to{" "}
+            {instant ? (revealed ? "continue" : "submit") : "continue"}
+          </p>
+          <Button
+            size="lg"
+            className="h-12 w-full rounded-full px-6 text-base font-semibold sm:ml-auto sm:w-auto sm:min-w-40"
+            onClick={submitOrAdvance}
+            disabled={instant ? !selected && !revealed : false}
+          >
+            {instant
+              ? revealed
+                ? last
+                  ? "See results"
+                  : "Next"
+                : "Submit"
+              : last
                 ? "See results"
-                : "Next"
-              : "Submit"
-            : last
-              ? "See results"
-              : "Next"}
-          <ChevronRight className="size-4" />
-        </Button>
+                : "Next"}
+            <ChevronRight className="size-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );

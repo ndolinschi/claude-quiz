@@ -1,29 +1,29 @@
 # Claude Quiz Lab
 
-Interactive quiz for the **Claude Agent SDK practice bank**: 18 sets, 1,078 questions, each with A–D choices, the correct answer, and an explanation.
+Interactive, mobile-first quiz for the **Claude Agent SDK practice bank** — domains, keyword tags, Instant or Exam mode.
 
 ## Features
 
-- Client-side bank in `src/data/questions.json`
-- Setup: question count (10 / 25 / 50 / 100 / All / custom), time limit, shuffle, practice-set filter, instant vs exam mode
-- Session: one question at a time, progress, countdown, keyboard **A–D** + Enter
-- Results: score, time used, review misses, retry / new shuffle
+- Client-side bank in `src/data/questions.json` (1,078 items) with `domains` + `tags`
+- Setup: how-to tip card, domain chips, searchable tags, optional practice set, duration, session size, shuffle, Instant vs Exam
+- Session: large tap targets, sticky actions, subtle `current / total` progress, countdown
+- Results: score ring, **domain breakdown**, miss review
 
-## Parse
+## Scripts
 
 ```bash
-npm run parse
-# reads /tmp/questions-quiz.pdf.txt by default
-# node scripts/parse-questions.mjs --input=/path/to.txt --output=src/data/questions.json
+npm run parse    # PDF text → questions.json (+ enrich)
+npm run enrich   # re-attach domains/tags to existing JSON
+npm run dev
+npm run build
 ```
 
-## Develop
+Parse reads `/tmp/questions-quiz.pdf.txt` by default:
 
 ```bash
-npm install
-npm run dev
+node scripts/parse-questions.mjs --input=/path/to.txt --output=src/data/questions.json
 ```
 
 ## Stack
 
-Next.js App Router · TypeScript · Tailwind CSS v4 · shadcn/ui
+Next.js App Router · TypeScript · Tailwind CSS v4 · shadcn/ui (Claude-warm cream + terracotta)

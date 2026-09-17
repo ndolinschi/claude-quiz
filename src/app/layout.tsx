@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Figtree, Fraunces, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -21,7 +21,14 @@ const plex = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Claude Quiz Lab",
   description:
-    "Interactive practice bank for the Claude Agent SDK — 1,078 questions across 18 sets.",
+    "Mobile-first Claude Agent SDK practice quiz — filter by domain and tag, Instant or Exam mode.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#f3ead8",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -30,7 +37,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${figtree.variable} ${fraunces.variable} ${plex.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex min-h-full flex-col overflow-x-hidden">
+        {children}
+      </body>
     </html>
   );
 }

@@ -24,7 +24,7 @@ type Store = {
   endedAt: number | null;
 };
 
-const STORAGE_KEY = "claude-quiz-lab-v1";
+const STORAGE_KEY = "claude-quiz-lab-v2";
 
 const EMPTY: Store = {
   phase: "setup",
@@ -44,7 +44,11 @@ function loadStore(): Store {
     if (!raw) return EMPTY;
     const parsed = JSON.parse(raw) as Store;
     if (!parsed?.phase) return EMPTY;
-    return { ...EMPTY, ...parsed };
+    return {
+      ...EMPTY,
+      ...parsed,
+      config: { ...DEFAULT_SETUP, ...(parsed.config || {}) },
+    };
   } catch {
     return EMPTY;
   }

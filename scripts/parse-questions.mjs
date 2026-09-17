@@ -6,6 +6,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { enrichBank } from "./enrich-questions.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -156,7 +157,8 @@ function main() {
     answer,
     explanation,
   }));
-  writeFileSync(OUTPUT, JSON.stringify(payload, null, 2) + "\n");
+  const enriched = enrichBank(payload);
+  writeFileSync(OUTPUT, JSON.stringify(enriched, null, 2) + "\n");
 
   console.log(`Parsed ${questions.length} questions from ${Object.keys(setCounts).length} sets`);
   console.log("Per set:", JSON.stringify(setCounts));

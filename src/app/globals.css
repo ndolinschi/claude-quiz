@@ -138,6 +138,7 @@
   }
   html {
     @apply font-sans;
+    overflow-x: hidden;
   }
   .font-heading {
     font-family: var(--font-fraunces), ui-serif, Georgia, serif;

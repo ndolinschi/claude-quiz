@@ -3,6 +3,18 @@ export type Choice = {
   text: string;
 };
 
+export type Domain =
+  | "Tools"
+  | "MCP"
+  | "Subagents"
+  | "Sessions"
+  | "Memory/CLAUDE.md"
+  | "Permissions"
+  | "Hooks"
+  | "Skills"
+  | "Prompting"
+  | "Architecture";
+
 export type Question = {
   id: string;
   set: number;
@@ -10,4 +22,6 @@ export type Question = {
   choices: Choice[];
   answer: string;
   explanation: string;
+  domains: Domain[];
+  tags: string[];
 };

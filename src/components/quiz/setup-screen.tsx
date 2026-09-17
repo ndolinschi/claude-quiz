@@ -1,7 +1,16 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { FlaskConical, Keyboard, Shuffle, Timer } from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
+import {
+  BookOpen,
+  Filter,
+  FlaskConical,
+  Keyboard,
+  Search,
+  Shuffle,
+  Timer,
+  X,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,14 +22,17 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import {
+  ALL_TAGS,
+  DOMAIN_LIST,
   PRACTICE_SETS,
-  SET_COUNTS,
-  TOTAL_QUESTIONS,
-  poolForSets,
+  filterPool,
   resolveCount,
   type CountPreset,
+  type Domain,
   type SetupConfig,
   type TimePreset,
 } from "@/lib/quiz";
@@ -37,24 +49,31 @@ const COUNT_PRESETS: { value: CountPreset; label: string }[] = [
 
 const TIME_PRESETS: { value: TimePreset; label: string }[] = [
   { value: 0, label: "None" },
-  { value: 15, label: "15 min" },
-  { value: 30, label: "30 min" },
-  { value: 45, label: "45 min" },
-  { value: 60, label: "60 min" },
-  { value: 90, label: "90 min" },
+  { value: 15, label: "15m" },
+  { value: 30, label: "30m" },
+  { value: 45, label: "45m" },
+  { value: 60, label: "60m" },
+  { value: 90, label: "90m" },
 ];
 
 function Segmented<T extends string | number>({
   options,
   value,
   onChange,
+  className,
 }: {
   options: { value: T; label: string }[];
   value: T;
   onChange: (value: T) => void;
+  className?: string;
 }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div
+      className={cn(
+        "flex flex-wrap gap-1.5 rounded-2xl border border-border/70 bg-muted/40 p-1.5",
+        className
+      )}
+    >
       {options.map((opt) => {
         const active = opt.value === value;
         return (
@@ -63,10 +82,10 @@ function Segmented<T extends string | number>({
             type="button"
             onClick={() => onChange(opt.value)}
             className={cn(
-              "h-9 rounded-full border px-3.5 text-sm font-medium transition-all",
+              "min-h-10 flex-1 rounded-xl px-3 text-sm font-medium transition-all sm:min-h-9 sm:flex-none",
               active
-                ? "border-primary bg-primary text-primary-foreground shadow-[0_1px_0_rgba(255,255,255,0.2)_inset]"
-                : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-accent"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-foreground/80 hover:bg-card hover:text-foreground"
             )}
           >
             {opt.label}
@@ -74,6 +93,34 @@ function Segmented<T extends string | number>({
         );
       })}
     </div>
+  );
+}
+
+function Chip({
+  active,
+  onClick,
+  children,
+  className,
+}: {
+  active?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex min-h-9 items-center gap-1 rounded-full border px-3 text-xs font-medium transition-all",
+        active
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-accent",
+        className
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -86,90 +133,321 @@ export function SetupScreen({
   onChange: (next: SetupConfig) => void;
   onStart: () => void;
 }) {
-  const pool = poolForSets(config.sets);
+  const [tagQuery, setTagQuery] = useState("");
+  const pool = useMemo(() => filterPool(config), [config]);
   const count = resolveCount(config, pool.length);
 
+  const filteredTags = useMemo(() => {
+    const q = tagQuery.trim().toLowerCase();
+    const list = q
+      ? ALL_TAGS.filter((t) => t.toLowerCase().includes(q))
+      : ALL_TAGS;
+    // Keep selected tags visible even if filtered out
+    const selected = config.tags.filter((t) => !list.includes(t));
+    return [...selected, ...list].slice(0, 28);
+  }, [tagQuery, config.tags]);
+
+  const toggleDomain = (d: Domain) => {
+    const on = config.domains.includes(d);
+    onChange({
+      ...config,
+      domains: on
+        ? config.domains.filter((x) => x !== d)
+        : [...config.domains, d],
+    });
+  };
+
+  const toggleTag = (t: string) => {
+    const on = config.tags.includes(t);
+    onChange({
+      ...config,
+      tags: on ? config.tags.filter((x) => x !== t) : [...config.tags, t],
+    });
+  };
+
+  const toggleSet = (set: number) => {
+    const on = config.sets.includes(set);
+    onChange({
+      ...config,
+      sets: on
+        ? config.sets.filter((s) => s !== set)
+        : [...config.sets, set].sort((a, b) => a - b),
+    });
+  };
+
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:py-12">
-      <header className="mb-8 text-center sm:mb-10">
-        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl border border-copper/30 bg-[radial-gradient(circle_at_30%_20%,#e8b07a,transparent_55%),linear-gradient(160deg,#8a3b16,#c45c26)] text-[#f8ead6] shadow-[0_10px_30px_-12px_rgba(138,59,22,0.65)]">
-          <FlaskConical className="size-8" strokeWidth={1.6} />
+    <div className="mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:pb-12 sm:pt-10">
+      <header className="mb-6 text-center sm:mb-8">
+        <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl border border-copper/30 bg-[radial-gradient(circle_at_30%_20%,#e8b07a,transparent_55%),linear-gradient(160deg,#8a3b16,#c45c26)] text-[#f8ead6] shadow-[0_10px_30px_-12px_rgba(138,59,22,0.65)] sm:size-16">
+          <FlaskConical className="size-7 sm:size-8" strokeWidth={1.6} />
         </div>
         <p className="mb-2 font-mono text-[11px] tracking-[0.28em] text-copper uppercase">
-          Agent SDK · Practice Bank
+          Agent SDK · Practice
         </p>
-        <h1 className="font-heading text-4xl tracking-tight text-ink sm:text-5xl">
+        <h1 className="font-heading text-3xl tracking-tight text-ink sm:text-5xl">
           Claude Quiz Lab
         </h1>
-        <p className="mx-auto mt-3 max-w-md text-pretty text-muted-foreground">
-          {TOTAL_QUESTIONS.toLocaleString()} questions across 18 practice sets.
-          Sit a timed drill or work through the whole bank.
+        <p className="mx-auto mt-3 max-w-md text-pretty text-sm text-muted-foreground sm:text-base">
+          Filter by domain and tag, pick a length, then drill Instant or Exam
+          mode — built for mobile first.
         </p>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-          <Badge variant="outline" className="border-copper/30 bg-card">
-            {TOTAL_QUESTIONS} items
-          </Badge>
-          <Badge variant="outline" className="border-copper/30 bg-card">
-            Instant or exam mode
-          </Badge>
-          <Badge variant="outline" className="border-copper/30 bg-card">
-            Keys A–D
-          </Badge>
-        </div>
       </header>
 
-      <div className="grid gap-4">
-        <Card className="bg-card/90 shadow-sm">
-          <CardHeader>
-            <CardTitle>How many questions?</CardTitle>
+      <div className="grid gap-3.5 sm:gap-4">
+        {/* How to use */}
+        <Card className="overflow-hidden border-copper/20 bg-card/95 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <BookOpen className="size-4 text-copper" />
+              How to use
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pb-4">
+            <ol className="grid gap-2.5 text-sm text-muted-foreground">
+              <li className="flex gap-2.5">
+                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/12 font-mono text-[11px] font-semibold text-primary">
+                  1
+                </span>
+                <span>
+                  Optionally filter by <strong className="text-foreground">domains</strong> and{" "}
+                  <strong className="text-foreground">tags</strong> (or a practice set).
+                </span>
+              </li>
+              <li className="flex gap-2.5">
+                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/12 font-mono text-[11px] font-semibold text-primary">
+                  2
+                </span>
+                <span>
+                  Choose session size and an optional timer. Progress shows as{" "}
+                  <strong className="text-foreground">current / total</strong> during the run.
+                </span>
+              </li>
+              <li className="flex gap-2.5">
+                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/12 font-mono text-[11px] font-semibold text-primary">
+                  3
+                </span>
+                <span>
+                  Toggle shuffle and pick{" "}
+                  <strong className="text-foreground">Instant</strong> (reveal after each) or{" "}
+                  <strong className="text-foreground">Exam</strong> (review at the end).
+                </span>
+              </li>
+              <li className="flex gap-2.5">
+                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/12 font-mono text-[11px] font-semibold text-primary">
+                  4
+                </span>
+                <span>
+                  On desktop, tap <kbd className="rounded border bg-muted px-1 font-mono text-[11px]">A–D</kbd> then{" "}
+                  <kbd className="rounded border bg-muted px-1 font-mono text-[11px]">Enter</kbd>. On mobile, use the large choices + sticky action.
+                </span>
+              </li>
+            </ol>
+          </CardContent>
+        </Card>
+
+        {/* Domains */}
+        <Card className="bg-card/95 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Filter className="size-4 text-copper" />
+              Domains
+            </CardTitle>
+            <CardDescription>Multi-select. Empty = all domains.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-1.5 pb-4">
+            <Chip
+              active={config.domains.length === 0}
+              onClick={() => onChange({ ...config, domains: [] })}
+            >
+              All
+            </Chip>
+            {DOMAIN_LIST.map((d) => (
+              <Chip
+                key={d}
+                active={config.domains.includes(d)}
+                onClick={() => toggleDomain(d)}
+              >
+                {d}
+              </Chip>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Tags */}
+        <Card className="bg-card/95 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base sm:text-lg">Tags</CardTitle>
             <CardDescription>
-              Draw from {pool.length.toLocaleString()} items in the selected
-              sets.
+              Keyword chips from stems. Search to narrow.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-3 pb-4">
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={tagQuery}
+                onChange={(e) => setTagQuery(e.target.value)}
+                placeholder="Search tags (MCP, CLAUDE.md, hooks…)"
+                className="h-11 bg-background pl-9"
+              />
+              {tagQuery && (
+                <button
+                  type="button"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground"
+                  onClick={() => setTagQuery("")}
+                  aria-label="Clear tag search"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
+            {config.tags.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">Selected:</span>
+                {config.tags.map((t) => (
+                  <Badge
+                    key={t}
+                    variant="outline"
+                    className="cursor-pointer border-primary/40 bg-primary/8 font-mono"
+                    onClick={() => toggleTag(t)}
+                  >
+                    {t}
+                    <X className="ml-1 size-3" />
+                  </Badge>
+                ))}
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                  onClick={() => onChange({ ...config, tags: [] })}
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+            <div className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto overscroll-contain pr-1">
+              {filteredTags.map((t) => (
+                <Chip
+                  key={t}
+                  active={config.tags.includes(t)}
+                  onClick={() => toggleTag(t)}
+                  className="font-mono"
+                >
+                  {t}
+                </Chip>
+              ))}
+              {!filteredTags.length && (
+                <p className="text-sm text-muted-foreground">No tags match.</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Practice sets (optional) */}
+        <Card className="bg-card/95 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base sm:text-lg">Practice set</CardTitle>
+            <CardDescription>Optional. Leave empty for any set.</CardDescription>
+          </CardHeader>
+          <CardContent className="pb-4">
+            <div className="flex flex-wrap gap-1.5">
+              <Chip
+                active={config.sets.length === 0}
+                onClick={() => onChange({ ...config, sets: [] })}
+              >
+                Any
+              </Chip>
+              {PRACTICE_SETS.map((set) => (
+                <Chip
+                  key={set}
+                  active={config.sets.includes(set)}
+                  onClick={() => toggleSet(set)}
+                  className="font-mono"
+                >
+                  {set}
+                </Chip>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Session size */}
+        <Card className="bg-card/95 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base sm:text-lg">Session size</CardTitle>
+            <CardDescription>
+              Drawing {count} from the filtered pool
+              {pool.length !== count ? ` (${pool.length} available)` : ""}.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 pb-4">
             <Segmented
               options={COUNT_PRESETS}
               value={config.countPreset}
               onChange={(countPreset) => onChange({ ...config, countPreset })}
             />
-            {config.countPreset === "custom" && (
-              <div className="flex items-center gap-2">
-                <Label htmlFor="custom-count" className="text-muted-foreground">
-                  Count
-                </Label>
-                <Input
-                  id="custom-count"
-                  type="number"
+            {(config.countPreset === "custom" ||
+              config.countPreset === "all") && (
+              <div className="space-y-2">
+                {config.countPreset === "custom" && (
+                  <div className="flex items-center justify-between gap-3">
+                    <Label htmlFor="custom-count" className="text-muted-foreground">
+                      Custom
+                    </Label>
+                    <Input
+                      id="custom-count"
+                      type="number"
+                      min={1}
+                      max={Math.max(1, pool.length)}
+                      value={config.customCount}
+                      onChange={(e) =>
+                        onChange({
+                          ...config,
+                          customCount: Number(e.target.value),
+                        })
+                      }
+                      className="h-10 w-24 bg-background text-center font-mono"
+                    />
+                  </div>
+                )}
+                <Slider
                   min={1}
-                  max={pool.length}
-                  value={config.customCount}
-                  onChange={(e) =>
+                  max={Math.max(1, pool.length)}
+                  step={1}
+                  value={[
+                    config.countPreset === "all"
+                      ? pool.length || 1
+                      : Math.min(
+                          Math.max(1, config.customCount),
+                          Math.max(1, pool.length)
+                        ),
+                  ]}
+                  onValueChange={(v) => {
+                    const n = Array.isArray(v) ? v[0] : v;
                     onChange({
                       ...config,
-                      customCount: Number(e.target.value),
-                    })
-                  }
-                  className="h-9 w-28 bg-background"
+                      countPreset: "custom",
+                      customCount: Number(n) || 1,
+                    });
+                  }}
+                  className="py-1"
                 />
               </div>
             )}
-            <p className="font-mono text-xs text-muted-foreground">
-              Session length: {count} question{count === 1 ? "" : "s"}
-            </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-card/90 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Timer className="size-4 text-copper" /> Time limit
+        {/* Duration */}
+        <Card className="bg-card/95 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Timer className="size-4 text-copper" />
+              Duration
             </CardTitle>
             <CardDescription>
-              Live countdown during the session. Time&apos;s up auto-submits.
+              Live countdown. Time&apos;s up auto-submits.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-4">
             <Segmented
               options={TIME_PRESETS}
               value={config.timeMinutes}
@@ -178,101 +456,69 @@ export function SetupScreen({
           </CardContent>
         </Card>
 
-        <Card className="bg-card/90 shadow-sm">
-          <CardHeader>
-            <CardTitle>Session options</CardTitle>
+        {/* Options + mode */}
+        <Card className="bg-card/95 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base sm:text-lg">Options</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pb-4">
             <RowToggle
               icon={<Shuffle className="size-4 text-copper" />}
               title="Shuffle questions"
-              hint="Random order from the selected pool"
+              hint="Random order from the filtered pool"
               checked={config.shuffleQuestions}
               onCheckedChange={(shuffleQuestions) =>
                 onChange({ ...config, shuffleQuestions })
               }
             />
+            <Separator />
             <RowToggle
               title="Shuffle choices"
-              hint="Reorder A–D so the answer key is not memorized"
+              hint="Reorder A–D so the key isn’t memorized"
               checked={config.shuffleChoices}
               onCheckedChange={(shuffleChoices) =>
                 onChange({ ...config, shuffleChoices })
               }
             />
-            <RowToggle
-              icon={<Keyboard className="size-4 text-copper" />}
-              title="Instant feedback"
-              hint="Show the answer and explanation after each submit. Off = exam mode, review at the end."
-              checked={config.feedback === "instant"}
-              onCheckedChange={(on) =>
-                onChange({ ...config, feedback: on ? "instant" : "exam" })
-              }
-            />
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/90 shadow-sm">
-          <CardHeader>
-            <CardTitle>Practice sets</CardTitle>
-            <CardDescription>
-              Leave all on to use the full bank. Each set is a self-contained
-              exam.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-3 flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => onChange({ ...config, sets: [] })}
-                className={cn(
-                  "h-8 rounded-full border px-3 text-xs font-medium",
-                  config.sets.length === 0
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card hover:border-primary/40"
-                )}
-              >
-                All sets
-              </button>
-              {PRACTICE_SETS.map((set) => {
-                const on = config.sets.includes(set);
-                return (
-                  <button
-                    key={set}
-                    type="button"
-                    onClick={() => {
-                      const next = on
-                        ? config.sets.filter((s) => s !== set)
-                        : [...config.sets, set].sort((a, b) => a - b);
-                      onChange({ ...config, sets: next });
-                    }}
-                    className={cn(
-                      "h-8 rounded-full border px-3 font-mono text-xs font-medium",
-                      on
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-card hover:border-primary/40"
-                    )}
-                  >
-                    {set}
-                    <span className="ml-1 opacity-70">{SET_COUNTS[set]}</span>
-                  </button>
-                );
-              })}
+            <Separator />
+            <div>
+              <div className="mb-2 flex items-center gap-2 font-medium">
+                <Keyboard className="size-4 text-copper" />
+                Mode
+              </div>
+              <Segmented
+                options={[
+                  { value: "instant" as const, label: "Instant feedback" },
+                  { value: "exam" as const, label: "Exam" },
+                ]}
+                value={config.feedback}
+                onChange={(feedback) => onChange({ ...config, feedback })}
+              />
+              <p className="mt-2 text-sm text-muted-foreground">
+                Instant reveals after each submit. Exam waits until results.
+              </p>
             </div>
-            <p className="font-mono text-xs text-muted-foreground">
-              Pool: {pool.length.toLocaleString()} · Using {count}
-            </p>
           </CardContent>
         </Card>
+      </div>
 
-        <Button
-          size="lg"
-          className="h-12 w-full rounded-full text-base font-semibold"
-          onClick={onStart}
-          disabled={pool.length === 0}
-        >
-          Start session
-        </Button>
+      {/* Sticky start CTA — mobile critical */}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/60 bg-background/90 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:static sm:mt-6 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-2 sm:flex-row sm:items-center">
+          <p className="hidden text-center font-mono text-xs text-muted-foreground sm:block sm:flex-1 sm:text-left">
+            {count} question{count === 1 ? "" : "s"}
+            {config.timeMinutes ? ` · ${config.timeMinutes}m` : ""}
+            {config.feedback === "exam" ? " · exam" : " · instant"}
+          </p>
+          <Button
+            size="lg"
+            className="h-12 w-full rounded-full text-base font-semibold sm:w-auto sm:min-w-48"
+            onClick={onStart}
+            disabled={pool.length === 0}
+          >
+            Start session
+          </Button>
+        </div>
       </div>
     </div>
   );
