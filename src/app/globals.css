@@ -139,12 +139,9 @@
   html {
     @apply font-sans;
     overflow-x: hidden;
+    color-scheme: light;
   }
   .font-heading {
     font-family: var(--font-fraunces), ui-serif, Georgia, serif;
   }
-}
-html[data-tg="1"] body {
-  background-image: none;
-  background-color: var(--background);
 }

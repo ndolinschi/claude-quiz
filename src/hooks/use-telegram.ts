@@ -17,6 +17,9 @@ export type TelegramWebApp = {
     button_text_color?: string;
     secondary_bg_color?: string;
   };
+  setHeaderColor?: (color: string, headerTextColor?: string) => void;
+  setBackgroundColor?: (color: string) => void;
+  setBottomBarColor?: (color: string) => void;
   MainButton?: {
     setText: (text: string) => void;
     show: () => void;
@@ -25,6 +28,9 @@ export type TelegramWebApp = {
     disable: () => void;
     onClick: (cb: () => void) => void;
     offClick: (cb: () => void) => void;
+    color?: string;
+    textColor?: string;
+    setParams?: (params: { color?: string; text_color?: string }) => void;
   };
   BackButton?: {
     show: () => void;
@@ -57,29 +63,47 @@ export function isInsideTelegram(app: TelegramWebApp | null): boolean {
   return platform !== "" && platform !== "unknown";
 }
 
+const PAPER = "#F4F0E6";
+const INK = "#2A2118";
+const COPPER = "#C15F3C";
+const BUTTON_TEXT = "#F7F3EA";
+
+function paintChrome(
+  fn: ((color: string, headerTextColor?: string) => void) | undefined,
+  color: string,
+  headerTextColor?: string
+) {
+  if (typeof fn !== "function") return;
+  try {
+    if (headerTextColor !== undefined && fn.length >= 2) fn(color, headerTextColor);
+    else fn(color);
+  } catch {
+    /* this client rejects the chrome color */
+  }
+}
+
+function paintMainButton(button: TelegramWebApp["MainButton"]) {
+  if (!button) return;
+  try {
+    if (typeof button.setParams === "function") {
+      button.setParams({ color: COPPER, text_color: BUTTON_TEXT });
+    } else {
+      button.color = COPPER;
+      button.textColor = BUTTON_TEXT;
+    }
+  } catch {
+    /* button colors stay as the client set them */
+  }
+}
+
 function applyTheme(app: TelegramWebApp) {
-  const theme = app.themeParams || {};
   const root = document.documentElement;
   root.dataset.tg = "1";
-  const set = (name: string, value?: string) => {
-    if (value) root.style.setProperty(name, value);
-  };
-  set("--background", theme.bg_color);
-  set("--foreground", theme.text_color);
-  set("--card", theme.secondary_bg_color || theme.bg_color);
-  set("--card-foreground", theme.text_color);
-  set("--popover", theme.secondary_bg_color || theme.bg_color);
-  set("--popover-foreground", theme.text_color);
-  set("--primary", theme.button_color);
-  set("--primary-foreground", theme.button_text_color || "#ffffff");
-  set("--muted-foreground", theme.hint_color);
-  set("--copper", theme.button_color);
-  set("--ink", theme.text_color);
-  set("--accent", theme.secondary_bg_color || theme.bg_color);
-  set("--secondary", theme.secondary_bg_color || theme.bg_color);
-  set("--secondary-foreground", theme.text_color);
-  set("--ring", theme.button_color);
-  if (theme.hint_color) set("--border", theme.hint_color);
+  // Keep the cream paper palette. Do not copy themeParams onto CSS variables, and never add "dark".
+  paintChrome(app.setHeaderColor, PAPER, INK);
+  paintChrome(app.setBackgroundColor, PAPER);
+  paintChrome(app.setBottomBarColor, PAPER);
+  paintMainButton(app.MainButton);
 }
 
 export function useTelegram() {
@@ -181,6 +205,7 @@ export function useTelegramMainButton(
     if (!button) return;
     const handler = () => onClickRef.current?.();
     try {
+      paintMainButton(button);
       button.setText(text);
       if (enabled) button.enable();
       else button.disable();
