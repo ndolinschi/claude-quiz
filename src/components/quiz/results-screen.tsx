@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Check, RotateCcw, Shuffle, Sparkles, X } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Check, Clipboard, RotateCcw, Shuffle, Sparkles, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +55,44 @@ export function ResultsScreen({
     [answers, items]
   );
   const [openId, setOpenId] = useState<string | null>(misses[0]?.id ?? null);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "fallback">("idle");
+  const fallbackTextRef = useRef<HTMLTextAreaElement>(null);
+
+  const wrongAnswersText = useMemo(
+    () =>
+      [
+        `Wrong answers (${misses.length})`,
+        "",
+        ...misses.flatMap((q, index) => {
+          const chosen = answers[q.id];
+          const chosenChoice = q.choices.find((choice) => choice.key === chosen);
+          const correctChoice = q.choices.find(
+            (choice) => choice.key === q.answer
+          );
+          const formatChoice = (key: string, text?: string) =>
+            text ? `${key} ${text}` : key;
+
+          return [
+            `${index + 1}. ${q.stem}`,
+            `Your answer: ${formatChoice(chosen, chosenChoice?.text)}`,
+            `Correct: ${formatChoice(q.answer, correctChoice?.text)}`,
+            "",
+          ];
+        }),
+      ].join("\n").trimEnd(),
+    [answers, misses]
+  );
+
+  const handleCopyWrongAnswers = async () => {
+    try {
+      await navigator.clipboard.writeText(wrongAnswersText);
+      setCopyStatus("copied");
+      window.setTimeout(() => setCopyStatus("idle"), 1800);
+    } catch {
+      setCopyStatus("fallback");
+      window.setTimeout(() => fallbackTextRef.current?.select(), 0);
+    }
+  };
 
   const tone =
     stats.percent >= 80
@@ -125,6 +163,34 @@ export function ResultsScreen({
           </Badge>
           <Badge variant="outline">{stats.blank} skipped</Badge>
         </div>
+        {misses.length > 0 && (
+          <div className="mt-4 w-full">
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-12 w-full rounded-full bg-secondary text-base text-secondary-foreground hover:bg-secondary/80"
+              onClick={handleCopyWrongAnswers}
+            >
+              <Clipboard className="size-4" />
+              {copyStatus === "copied" ? "Copied" : "Copy wrong answers"}
+            </Button>
+            {copyStatus === "fallback" && (
+              <div className="mt-3 text-left">
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Clipboard unavailable. Long-press the text below to copy it.
+                </p>
+                <textarea
+                  ref={fallbackTextRef}
+                  readOnly
+                  value={wrongAnswersText}
+                  aria-label="Wrong answers to copy"
+                  onFocus={(event) => event.currentTarget.select()}
+                  className="min-h-40 w-full resize-y rounded-lg border border-border bg-card p-3 font-mono text-xs leading-relaxed text-foreground"
+                />
+              </div>
+            )}
+          </div>
+        )}
         {isPro ? (
           <p className="mt-3.5 flex items-center justify-center gap-1.5 text-xs font-medium text-copper">
             <Sparkles className="size-3.5" />
