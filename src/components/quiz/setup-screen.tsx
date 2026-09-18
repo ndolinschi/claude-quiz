@@ -26,10 +26,7 @@ import { ProgressPanel } from "./progress-panel";
 import { PaywallCard } from "./paywall-card";
 import { DebugProToggle } from "./debug-pro-toggle";
 import { cn } from "@/lib/utils";
-import {
-  useTelegram,
-  useTelegramMainButton,
-} from "@/hooks/use-telegram";
+import { useTelegram } from "@/hooks/use-telegram";
 
 const COUNT_PRESETS: { value: CountPreset; label: string }[] = [
   { value: 10, label: "10" },
@@ -125,17 +122,6 @@ export function SetupScreen({
     onStart();
   };
 
-  useTelegramMainButton(
-    {
-      text:
-        !PRO_FOR_EVERYONE && exhausted
-          ? "Daily limit"
-          : `Start · ${effective || 0}`,
-      enabled: canStart,
-      onClick: start,
-    },
-    tg.booted
-  );
 
   const toggleDomain = (domain: Domain) => {
     const on = config.domains.includes(domain);
@@ -427,14 +413,7 @@ export function SetupScreen({
         </details>
       </main>
 
-      <div
-        className={cn(
-          "sticky bottom-0 z-10 mt-auto border-t border-border/70 bg-background/95 px-4 pt-3 backdrop-blur",
-          tg.inTelegram
-            ? "pb-[max(5.5rem,env(safe-area-inset-bottom))]"
-            : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-        )}
-      >
+      <div className="sticky bottom-0 z-10 mt-auto border-t border-border/70 bg-background/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
         <Button
           className="h-14 w-full rounded-2xl text-base font-semibold"
           onClick={start}

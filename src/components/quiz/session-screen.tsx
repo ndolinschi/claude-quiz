@@ -18,11 +18,7 @@ import { useCountdown } from "@/hooks/use-countdown";
 import { formatClock, type SetupConfig } from "@/lib/quiz";
 import type { Question } from "@/data/types";
 import { cn } from "@/lib/utils";
-import {
-  useTelegram,
-  useTelegramBackButton,
-  useTelegramMainButton,
-} from "@/hooks/use-telegram";
+import { useTelegram } from "@/hooks/use-telegram";
 
 export function SessionScreen({
   items,
@@ -94,31 +90,6 @@ export function SessionScreen({
   }, [instant, onNext, onSubmitAnswer, question, revealed, selected]);
 
   const tg = useTelegram();
-  const mainLabel = instant
-    ? revealed
-      ? last
-        ? "Results"
-        : "Next"
-      : "Submit"
-    : last
-      ? "Results"
-      : "Next";
-  useTelegramMainButton(
-    {
-      text: mainLabel,
-      enabled: instant ? Boolean(selected) || revealed : true,
-      onClick: () => {
-        tg.haptic("impact");
-        submitOrAdvance();
-      },
-    },
-    tg.booted
-  );
-  useTelegramBackButton(() => {
-    tg.haptic("warning");
-    setCancelOpen(true);
-  }, tg.booted);
-
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement | null)?.tagName;
@@ -179,13 +150,6 @@ export function SessionScreen({
             <Clock className="size-3.5 opacity-70" />
             {timerLabel}
           </span>
-          <Button
-            variant="outline"
-            className="h-11 rounded-xl px-3"
-            onClick={() => setCancelOpen(true)}
-          >
-            Cancel
-          </Button>
         </div>
       </div>
 
@@ -323,12 +287,7 @@ export function SessionScreen({
         </CardContent>
       </Card>
 
-      <div className={cn(
-        "sticky bottom-0 z-10 -mx-3 mt-auto border-t border-border/50 bg-background/95 px-3 pt-3 backdrop-blur-md",
-        tg.inTelegram
-          ? "pb-[max(5.5rem,env(safe-area-inset-bottom))]"
-          : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-      )}>
+      <div className="sticky bottom-0 z-10 -mx-3 mt-auto border-t border-border/50 bg-background/95 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { scopeProgressToTelegramUser } from "@/lib/progress-store";
 
 export type TelegramWebApp = {
@@ -119,6 +119,16 @@ export function useTelegram() {
       const app = getTelegramWebApp();
       if (!app) return false;
       try {
+        app.MainButton?.hide();
+      } catch {
+        /* native main button is optional */
+      }
+      try {
+        app.BackButton?.hide();
+      } catch {
+        /* native back button is optional */
+      }
+      try {
         app.ready();
         app.expand();
       } catch {
@@ -187,70 +197,4 @@ export function useTelegram() {
   );
 
   return { ...state, haptic };
-}
-
-export function useTelegramMainButton(
-  opts: { text: string; enabled?: boolean; onClick: () => void } | null,
-  booted: boolean
-) {
-  const onClickRef = useRef(opts?.onClick);
-  onClickRef.current = opts?.onClick;
-  const text = opts?.text ?? "";
-  const enabled = opts?.enabled ?? true;
-  const active = Boolean(opts);
-
-  useEffect(() => {
-    if (!booted || !active) return;
-    const button = getTelegramWebApp()?.MainButton;
-    if (!button) return;
-    const handler = () => onClickRef.current?.();
-    try {
-      paintMainButton(button);
-      button.setText(text);
-      if (enabled) button.enable();
-      else button.disable();
-      button.onClick(handler);
-      button.show();
-    } catch {
-      return;
-    }
-    return () => {
-      try {
-        button.offClick(handler);
-        button.hide();
-      } catch {
-        /* screen left */
-      }
-    };
-  }, [active, booted, enabled, text]);
-}
-
-export function useTelegramBackButton(
-  onBack: (() => void) | null,
-  booted: boolean
-) {
-  const ref = useRef(onBack);
-  ref.current = onBack;
-  const active = Boolean(onBack);
-
-  useEffect(() => {
-    if (!booted || !active) return;
-    const button = getTelegramWebApp()?.BackButton;
-    if (!button) return;
-    const handler = () => ref.current?.();
-    try {
-      button.onClick(handler);
-      button.show();
-    } catch {
-      return;
-    }
-    return () => {
-      try {
-        button.offClick(handler);
-        button.hide();
-      } catch {
-        /* screen left */
-      }
-    };
-  }, [active, booted]);
 }

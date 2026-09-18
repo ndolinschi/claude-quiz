@@ -15,7 +15,6 @@ import {
 import type { Question } from "@/data/types";
 import { PRO_FOR_EVERYONE } from "@/lib/progress-store";
 import { cn } from "@/lib/utils";
-import { useTelegram, useTelegramBackButton } from "@/hooks/use-telegram";
 
 export function ResultsScreen({
   items,
@@ -56,8 +55,6 @@ export function ResultsScreen({
     [answers, items]
   );
   const [openId, setOpenId] = useState<string | null>(misses[0]?.id ?? null);
-  const tg = useTelegram();
-  useTelegramBackButton(onSetup, tg.booted);
 
   const tone =
     stats.percent >= 80

@@ -10,11 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EXTERNAL_PRACTICE, GUIDE_SECTIONS } from "@/data/guide";
-import { useTelegram, useTelegramBackButton } from "@/hooks/use-telegram";
 
 export function GuideScreen({ onBack }: { onBack: () => void }) {
-  const tg = useTelegram();
-  useTelegramBackButton(onBack, tg.booted);
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-16 pt-[max(1rem,env(safe-area-inset-top))]">
       <div className="mb-5 flex items-center gap-2">
