@@ -100,9 +100,9 @@ export function useTelegram() {
       } catch {
         /* object present but not ready yet */
       }
-      const inside = isInsideTelegram(app);
       const user = app.initDataUnsafe?.user;
-      if (inside && user?.id != null) {
+      const inside = isInsideTelegram(app) || user?.id != null;
+      if (user?.id != null) {
         try {
           scopeProgressToTelegramUser(user.id);
         } catch {
@@ -120,7 +120,7 @@ export function useTelegram() {
         setState({
           booted: true,
           inTelegram: inside,
-          firstName: inside ? user?.first_name || "" : "",
+          firstName: user?.first_name || "",
         });
       }
       return true;

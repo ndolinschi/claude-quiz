@@ -40,6 +40,18 @@ export type ProgressStore = {
 export const STORAGE_KEY = "claude-quiz-lab-v1";
 export const FREE_DAILY_LIMIT = 50;
 
+/**
+ * While true, every user is Pro: no 50/day gate and no paywall.
+ * Freemium checks stay in this module and apply again when this is false.
+ */
+export const PRO_FOR_EVERYONE = true;
+
+export function hasProAccess(
+  store: Pick<ProgressStore, "pro" | "debugPro">
+): boolean {
+  return PRO_FOR_EVERYONE || Boolean(store.pro || store.debugPro);
+}
+
 let scopedUserId: string | null = null;
 
 export function progressStorageKey(): string {
@@ -49,17 +61,12 @@ export function progressStorageKey(): string {
 function readTelegramUserId(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    const app = window.Telegram?.WebApp;
-    if (!app) return null;
-    const platform = String(app.platform || "").toLowerCase();
-    const inside =
-      Boolean(app.initData) || (platform !== "" && platform !== "unknown");
-    const id = app.initDataUnsafe?.user?.id;
-    if (inside && id != null) return String(id);
+    const id = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+    if (id == null || id === "") return null;
+    return String(id);
   } catch {
     return null;
   }
-  return null;
 }
 
 function adoptTelegramScope(): void {
@@ -218,7 +225,7 @@ export function saveProgressStore(store: ProgressStore): void {
  * Computes remaining questions allowed today for free tier.
  */
 export function getRemainingQuota(store: ProgressStore): number {
-  if (store.pro || store.debugPro) {
+  if (hasProAccess(store)) {
     return Infinity;
   }
   const today = getLocalDayKey();
@@ -348,7 +355,7 @@ export function appendHistory(
   store: ProgressStore,
   item: SessionHistoryItem
 ): ProgressStore {
-  if (!store.pro && !store.debugPro) {
+  if (!hasProAccess(store)) {
     return store;
   }
   const nextStore: ProgressStore = {

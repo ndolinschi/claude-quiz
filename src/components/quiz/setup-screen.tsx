@@ -21,7 +21,7 @@ import {
   type TimePreset,
 } from "@/lib/quiz";
 import type { ProgressStore } from "@/lib/progress-store";
-import { FREE_DAILY_LIMIT } from "@/lib/progress-store";
+import { FREE_DAILY_LIMIT, PRO_FOR_EVERYONE } from "@/lib/progress-store";
 import { ProgressPanel } from "./progress-panel";
 import { PaywallCard } from "./paywall-card";
 import { DebugProToggle } from "./debug-pro-toggle";
@@ -127,7 +127,10 @@ export function SetupScreen({
 
   useTelegramMainButton(
     {
-      text: exhausted ? "Daily limit" : `Start · ${effective || 0}`,
+      text:
+        !PRO_FOR_EVERYONE && exhausted
+          ? "Daily limit"
+          : `Start · ${effective || 0}`,
       enabled: canStart,
       onClick: start,
     },
@@ -171,16 +174,20 @@ export function SetupScreen({
         <h1 className="font-heading text-[1.65rem] leading-tight text-ink">
           Practice on the go
         </h1>
-        {tg.inTelegram && (
+        {tg.inTelegram ? (
           <p className="mt-1 text-sm text-muted-foreground">
-            Opened in Telegram
-            {tg.firstName ? ` · ${tg.firstName}` : ""}
+            {tg.firstName ? tg.firstName : "Opened in Telegram"}
           </p>
-        )}
+        ) : tg.booted ? (
+          <p className="mt-1 text-sm text-muted-foreground">
+            Open @FableCryptoBot and tap Practice so progress stays on that
+            Telegram user.
+          </p>
+        ) : null}
         <p className="mt-2 text-sm text-muted-foreground">
           {coverage.answered} of {coverage.total} seen · {coverage.percent}% of
           the bank
-          {isPro
+          {PRO_FOR_EVERYONE || isPro
             ? " · Pro"
             : ` · ${Math.min(store.questionsToday, FREE_DAILY_LIMIT)}/${FREE_DAILY_LIMIT} today`}
         </p>
@@ -216,7 +223,7 @@ export function SetupScreen({
           </div>
         )}
 
-        {exhausted && (
+        {!PRO_FOR_EVERYONE && exhausted && (
           <PaywallCard onUnlockDebugPro={() => onUnlockDebugPro(true)} />
         )}
 
@@ -396,10 +403,12 @@ export function SetupScreen({
               </div>
             </div>
 
-            <DebugProToggle
-              debugPro={store.debugPro}
-              onToggle={onUnlockDebugPro}
-            />
+            {!PRO_FOR_EVERYONE && (
+              <DebugProToggle
+                debugPro={store.debugPro}
+                onToggle={onUnlockDebugPro}
+              />
+            )}
 
             <ProgressPanel store={store} isPro={isPro} />
 
@@ -431,9 +440,11 @@ export function SetupScreen({
           onClick={start}
           disabled={!canStart}
         >
-          {exhausted ? "Daily limit reached" : `Start · ${effective} questions`}
+          {!PRO_FOR_EVERYONE && exhausted
+            ? "Daily limit reached"
+            : `Start · ${effective} questions`}
         </Button>
-        {!isPro && !exhausted && (
+        {!PRO_FOR_EVERYONE && !isPro && !exhausted && (
           <p className="mt-2 text-center text-xs text-muted-foreground">
             {remainingQuota} free left today
           </p>

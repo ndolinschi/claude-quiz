@@ -11,6 +11,7 @@ import {
   getProgressStoreSnapshot,
   getRemainingQuota,
   getServerSnapshot,
+  hasProAccess,
   setActiveSession as setSessionInStore,
   setDebugPro as setDebugProInStore,
   subscribeProgressStore,
@@ -32,7 +33,7 @@ export function useProgress() {
     () => false
   );
 
-  const isPro = Boolean(store.pro || store.debugPro);
+  const isPro = hasProAccess(store);
   const remainingQuota = getRemainingQuota(store);
 
   const recordAnswer = useCallback(
@@ -78,7 +79,7 @@ export function useProgress() {
       domains: string[];
       tags: string[];
     }) => {
-      if ((store.pro || store.debugPro) && store.activeSession) {
+      if (hasProAccess(store) && store.activeSession) {
         const item: SessionHistoryItem = {
           id: store.activeSession.id,
           startedAt: store.activeSession.startedAt,

@@ -13,6 +13,7 @@ import {
   type SetupConfig,
 } from "@/lib/quiz";
 import type { Question } from "@/data/types";
+import { PRO_FOR_EVERYONE } from "@/lib/progress-store";
 import { cn } from "@/lib/utils";
 import { useTelegram, useTelegramBackButton } from "@/hooks/use-telegram";
 
@@ -135,7 +136,7 @@ export function ResultsScreen({
         ) : (
           <div className="mt-3.5 flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <span>Session history is saved for Pro members</span>
-            {onUnlockPro && (
+            {!PRO_FOR_EVERYONE && onUnlockPro && (
               <button
                 type="button"
                 onClick={onUnlockPro}

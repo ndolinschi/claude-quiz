@@ -27,6 +27,7 @@ import {
   getTopTagCoverage,
 } from "@/lib/quiz";
 import type { ProgressStore } from "@/lib/progress-store";
+import { PRO_FOR_EVERYONE } from "@/lib/progress-store";
 import { cn } from "@/lib/utils";
 
 export function ProgressPanel({
@@ -206,7 +207,7 @@ export function ProgressPanel({
                     Track your exam scores and domain breakdowns across all past
                     drills with Pro.
                   </p>
-                  {onUnlockPro && (
+                  {!PRO_FOR_EVERYONE && onUnlockPro && (
                     <Button
                       size="sm"
                       onClick={onUnlockPro}
