@@ -9,7 +9,6 @@ import {
   History,
   Layers,
   Lock,
-  Tag,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,11 +20,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import {
-  getDomainCoverage,
-  getOverallCoverage,
-  getTopTagCoverage,
-} from "@/lib/quiz";
+import { getDomainCoverage, getOverallCoverage } from "@/lib/quiz";
 import type { ProgressStore } from "@/lib/progress-store";
 import { PRO_FOR_EVERYONE } from "@/lib/progress-store";
 import { cn } from "@/lib/utils";
@@ -39,7 +34,7 @@ export function ProgressPanel({
   isPro: boolean;
   onUnlockPro?: () => void;
 }) {
-  const [tab, setTab] = useState<"domains" | "tags" | "history">("domains");
+  const [tab, setTab] = useState<"domains" | "history">("domains");
   const [expanded, setExpanded] = useState(true);
 
   const overall = useMemo(
@@ -50,13 +45,8 @@ export function ProgressPanel({
     () => getDomainCoverage(store.answered),
     [store.answered]
   );
-  const tagCoverage = useMemo(
-    () => getTopTagCoverage(store.answered, 12),
-    [store.answered]
-  );
-
   return (
-    <Card className="overflow-hidden border-copper/25 bg-card/95 shadow-sm">
+    <Card className="overflow-hidden border-copper/25 bg-white shadow-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -117,19 +107,6 @@ export function ProgressPanel({
             </button>
             <button
               type="button"
-              onClick={() => setTab("tags")}
-              className={cn(
-                "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-all",
-                tab === "tags"
-                  ? "bg-card text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Tag className="size-3.5" />
-              Top Tags (12)
-            </button>
-            <button
-              type="button"
               onClick={() => setTab("history")}
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-all",
@@ -170,29 +147,7 @@ export function ProgressPanel({
             </div>
           )}
 
-          {/* Tab 2: Top Tags */}
-          {tab === "tags" && (
-            <div className="grid gap-2 sm:grid-cols-2">
-              {tagCoverage.map((t) => (
-                <div
-                  key={t.name}
-                  className="space-y-1 rounded-xl border border-border/60 bg-background/60 p-2.5"
-                >
-                  <div className="flex items-baseline justify-between gap-2 text-xs">
-                    <span className="font-mono font-medium text-foreground truncate">
-                      #{t.name}
-                    </span>
-                    <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
-                      {t.answered}/{t.total} ({t.percent}%)
-                    </span>
-                  </div>
-                  <Progress value={t.percent} className="h-1.5" />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Tab 3: History */}
+          {/* History */}
           {tab === "history" && (
             <div className="space-y-3">
               {!isPro ? (

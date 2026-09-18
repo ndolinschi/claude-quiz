@@ -72,7 +72,11 @@ export type SetupConfig = {
   sets: number[];
   domains: Domain[];
   tags: string[];
+  /** When true, questions already marked correct in progress are left out. */
+  skipCorrect: boolean;
 };
+
+export const MIN_QUESTION_COUNT = 5;
 
 export const DEFAULT_SETUP: SetupConfig = {
   countPreset: 25,
@@ -84,7 +88,23 @@ export const DEFAULT_SETUP: SetupConfig = {
   sets: [],
   domains: [],
   tags: [],
+  skipCorrect: false,
 };
+
+/** Fill missing fields on a setup saved before skipCorrect existed. */
+export function normalizeSetup(
+  raw: Partial<SetupConfig> | null | undefined
+): SetupConfig {
+  const next: SetupConfig = {
+    ...DEFAULT_SETUP,
+    ...(raw ?? {}),
+    skipCorrect: raw?.skipCorrect === true,
+  };
+  if (!Array.isArray(next.sets)) next.sets = [];
+  if (!Array.isArray(next.domains)) next.domains = [];
+  if (!Array.isArray(next.tags)) next.tags = [];
+  return next;
+}
 
 export function shuffle<T>(items: T[]): T[] {
   const next = [...items];
@@ -95,7 +115,13 @@ export function shuffle<T>(items: T[]): T[] {
   return next;
 }
 
-export function filterPool(config: Pick<SetupConfig, "sets" | "domains" | "tags">): Question[] {
+export type AnsweredFlags = Record<string, { correct?: boolean } | undefined>;
+
+export function filterPool(
+  config: Pick<SetupConfig, "sets" | "domains"> &
+    Partial<Pick<SetupConfig, "tags" | "skipCorrect">>,
+  answered: AnsweredFlags = {}
+): Question[] {
   let pool = QUESTION_BANK;
   if (config.sets.length) {
     const selected = new Set(config.sets);
@@ -105,9 +131,9 @@ export function filterPool(config: Pick<SetupConfig, "sets" | "domains" | "tags"
     const selected = new Set(config.domains);
     pool = pool.filter((q) => (q.domains || []).some((d) => selected.has(d)));
   }
-  if (config.tags.length) {
-    const selected = new Set(config.tags);
-    pool = pool.filter((q) => (q.tags || []).some((t) => selected.has(t)));
+  // Tag selection is gone. Treat tags as empty and do not filter by them.
+  if (config.skipCorrect) {
+    pool = pool.filter((q) => answered[q.id]?.correct !== true);
   }
   return pool;
 }
@@ -118,15 +144,25 @@ export function poolForSets(sets: number[]): Question[] {
 }
 
 export function resolveCount(config: SetupConfig, poolSize: number): number {
+  if (poolSize <= 0) return 0;
   if (config.countPreset === "all") return poolSize;
-  if (config.countPreset === "custom") {
-    return Math.min(poolSize, Math.max(1, Math.floor(config.customCount) || 1));
-  }
-  return Math.min(poolSize, config.countPreset);
+  const raw =
+    config.countPreset === "custom"
+      ? Math.floor(Number(config.customCount))
+      : config.countPreset;
+  // Never ask for fewer than 5 unless the filtered pool itself is smaller.
+  const requested =
+    !Number.isFinite(raw) || raw <= 0
+      ? MIN_QUESTION_COUNT
+      : Math.max(MIN_QUESTION_COUNT, raw);
+  return Math.min(poolSize, requested);
 }
 
-export function buildSession(config: SetupConfig): Question[] {
-  let pool = filterPool(config);
+export function buildSession(
+  config: SetupConfig,
+  answered: AnsweredFlags = {}
+): Question[] {
+  let pool = filterPool(config, answered);
   pool = config.shuffleQuestions ? shuffle(pool) : [...pool];
   const n = resolveCount(config, pool.length);
   const picked = pool.slice(0, n);

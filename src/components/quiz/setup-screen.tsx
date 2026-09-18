@@ -1,16 +1,14 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { BookOpen, ChevronDown, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
-  ALL_TAGS,
   DOMAIN_LIST,
   PRACTICE_SETS,
   SET_COUNTS,
-  TAG_COUNTS,
   DOMAIN_COUNTS,
   filterPool,
   getOverallCoverage,
@@ -95,8 +93,10 @@ export function SetupScreen({
   onOpenGuide?: () => void;
 }) {
   const tg = useTelegram();
-  const [tagQuery, setTagQuery] = useState("");
-  const pool = useMemo(() => filterPool(config), [config]);
+  const pool = useMemo(
+    () => filterPool(config, store.answered),
+    [config, store.answered]
+  );
   const count = resolveCount(config, pool.length);
   const exhausted = !isPro && remainingQuota <= 0;
   const clamped = !isPro && remainingQuota > 0 && remainingQuota < count;
@@ -106,15 +106,6 @@ export function SetupScreen({
     () => getOverallCoverage(store.answered),
     [store.answered]
   );
-
-  const filteredTags = useMemo(() => {
-    const q = tagQuery.trim().toLowerCase();
-    const list = q
-      ? ALL_TAGS.filter((tag) => tag.toLowerCase().includes(q))
-      : ALL_TAGS;
-    const selected = config.tags.filter((tag) => !list.includes(tag));
-    return [...selected, ...list].slice(0, 24);
-  }, [tagQuery, config.tags]);
 
   const start = () => {
     if (!canStart) return;
@@ -130,14 +121,6 @@ export function SetupScreen({
       domains: on
         ? config.domains.filter((item) => item !== domain)
         : [...config.domains, domain],
-    });
-  };
-
-  const toggleTag = (tag: string) => {
-    const on = config.tags.includes(tag);
-    onChange({
-      ...config,
-      tags: on ? config.tags.filter((item) => item !== tag) : [...config.tags, tag],
     });
   };
 
@@ -229,14 +212,27 @@ export function SetupScreen({
           {config.countPreset === "custom" && (
             <Input
               className="mt-2 h-12 text-base"
+              type="number"
               inputMode="numeric"
+              min={5}
               value={config.customCount}
-              onChange={(event) =>
+              onChange={(event) => {
+                const raw = event.target.value;
+                if (raw.trim() === "" || Number(raw) === 0) {
+                  onChange({ ...config, customCount: 5 });
+                  return;
+                }
+                const parsed = Math.floor(Number(raw));
                 onChange({
                   ...config,
-                  customCount: Number(event.target.value) || 1,
-                })
-              }
+                  customCount: Number.isFinite(parsed) ? parsed : 5,
+                });
+              }}
+              onBlur={() => {
+                if (!config.customCount || config.customCount < 5) {
+                  onChange({ ...config, customCount: 5 });
+                }
+              }}
               aria-label="Custom question count"
             />
           )}
@@ -271,6 +267,17 @@ export function SetupScreen({
             aria-label="Shuffle questions"
           />
         </label>
+
+        <label className="flex min-h-14 items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4">
+          <span className="text-sm font-semibold">Skip ones I got right</span>
+          <Switch
+            checked={config.skipCorrect}
+            onCheckedChange={(on) => onChange({ ...config, skipCorrect: on })}
+            aria-label="Skip ones I got right"
+          />
+        </label>
+
+        <ProgressPanel store={store} isPro={isPro} />
 
         <details className="rounded-2xl border border-border bg-card">
           <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between px-4 text-sm font-semibold [&::-webkit-details-marker]:hidden">
@@ -360,43 +367,12 @@ export function SetupScreen({
               </div>
             </div>
 
-            <div>
-              <p className="mb-2 text-sm font-semibold">Tags</p>
-              <Input
-                value={tagQuery}
-                onChange={(event) => setTagQuery(event.target.value)}
-                placeholder="Search tags"
-                className="mb-2 h-12"
-                aria-label="Search tags"
-              />
-              <div className="flex flex-wrap gap-2">
-                {filteredTags.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => toggleTag(tag)}
-                    className={cn(
-                      "min-h-10 rounded-full border px-3 text-xs",
-                      config.tags.includes(tag)
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background"
-                    )}
-                  >
-                    {tag}
-                    <span className="ml-1 opacity-70">{TAG_COUNTS[tag]}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {!PRO_FOR_EVERYONE && (
               <DebugProToggle
                 debugPro={store.debugPro}
                 onToggle={onUnlockDebugPro}
               />
             )}
-
-            <ProgressPanel store={store} isPro={isPro} />
 
             {onOpenGuide && (
               <Button

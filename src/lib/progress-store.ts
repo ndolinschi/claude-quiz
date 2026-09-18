@@ -1,4 +1,4 @@
-import type { SetupConfig } from "@/lib/quiz";
+import { normalizeSetup, type SetupConfig } from "@/lib/quiz";
 
 export type AnsweredRecord = {
   correct: boolean;
@@ -174,6 +174,22 @@ export function loadProgressStore(): ProgressStore {
     const isDebugPro = Boolean(parsed.debugPro);
     const isPro = Boolean(parsed.pro || isDebugPro);
 
+    const rawSession =
+      parsed.activeSession && typeof parsed.activeSession === "object"
+        ? parsed.activeSession
+        : null;
+    const savedSetup = rawSession?.config;
+    const hadSkipCorrect =
+      savedSetup &&
+      typeof savedSetup === "object" &&
+      (savedSetup.skipCorrect === true || savedSetup.skipCorrect === false);
+    const activeSession = rawSession
+      ? {
+          ...rawSession,
+          config: normalizeSetup(savedSetup),
+        }
+      : null;
+
     const store: ProgressStore = {
       v: 1,
       pro: isPro,
@@ -189,13 +205,10 @@ export function loadProgressStore(): ProgressStore {
           ? parsed.answered
           : {},
       history: Array.isArray(parsed.history) ? parsed.history : [],
-      activeSession:
-        parsed.activeSession && typeof parsed.activeSession === "object"
-          ? parsed.activeSession
-          : null,
+      activeSession,
     };
 
-    if (isNewDay) {
+    if (isNewDay || (activeSession && !hadSkipCorrect)) {
       saveProgressStore(store);
     }
     return store;

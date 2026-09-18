@@ -237,7 +237,7 @@ export function ResultsScreen({
       {byDomain.length > 0 && (
         <section className="mb-8">
           <h2 className="mb-3 font-heading text-xl">Domain breakdown</h2>
-          <Card className="bg-card/95 shadow-sm">
+          <Card className="bg-white shadow-sm">
             <CardContent className="grid gap-3 pt-4 pb-4">
               {byDomain.map((row) => (
                 <div key={row.domain} className="space-y-1.5">
@@ -265,7 +265,7 @@ export function ResultsScreen({
               const open = openId === q.id;
               const chosen = answers[q.id];
               return (
-                <Card key={q.id} className="overflow-hidden bg-card/95">
+                <Card key={q.id} className="overflow-hidden bg-white">
                   <button
                     type="button"
                     className="w-full px-4 py-3.5 text-left"
@@ -340,7 +340,7 @@ export function ResultsScreen({
           <h2 className="mb-3 font-heading text-xl">Skipped</h2>
           <div className="grid gap-2">
             {blanks.map((q) => (
-              <Card key={q.id} className="bg-card/95">
+              <Card key={q.id} className="bg-white">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-normal leading-snug break-words">
                     {q.stem}

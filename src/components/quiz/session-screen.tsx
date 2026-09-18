@@ -123,7 +123,7 @@ export function SessionScreen({
   const answeredCount = Object.keys(answers).length;
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-hidden px-3 pt-[max(0.5rem,env(safe-area-inset-top))]">
+    <div className="mx-auto flex min-h-dvh w-full min-w-0 max-w-md flex-col overflow-x-hidden px-3 pt-[max(0.5rem,env(safe-area-inset-top))]">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span className="font-mono text-xs tabular-nums text-muted-foreground">
@@ -134,7 +134,7 @@ export function SessionScreen({
           {question.domains?.[0] && (
             <Badge
               variant="outline"
-              className="max-w-[9.5rem] truncate border-copper/25 bg-card/80 text-[10px] sm:max-w-none sm:text-xs"
+              className="max-w-[9.5rem] min-w-0 truncate border-copper/25 bg-white text-[10px] sm:max-w-none sm:text-xs"
             >
               {question.domains[0]}
             </Badge>
@@ -183,27 +183,13 @@ export function SessionScreen({
         </DialogContent>
       </Dialog>
 
-      <Card className="mb-3 flex-1 overflow-hidden border-0 bg-transparent shadow-none">
-        <CardContent className="px-3.5 pt-1 pb-4 sm:px-5">
-          <p className="font-heading text-[1.05rem] leading-relaxed text-pretty break-words text-ink sm:text-xl">
+      <Card className="mb-3 min-w-0 w-full flex-1 overflow-hidden border border-border bg-white shadow-sm">
+        <CardContent className="min-w-0 overflow-x-hidden px-3.5 pt-1 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-5">
+          <p className="min-w-0 max-w-full font-heading text-[1.05rem] leading-relaxed text-pretty break-words [overflow-wrap:anywhere] text-ink sm:text-xl">
             {question.stem}
           </p>
 
-          {(question.tags?.length ?? 0) > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1">
-              {question.tags.slice(0, 4).map((t) => (
-                <Badge
-                  key={t}
-                  variant="secondary"
-                  className="h-5 font-mono text-[10px] font-normal"
-                >
-                  {t}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-5 grid gap-2.5">
+          <div className="mt-5 grid min-w-0 gap-2.5">
             {question.choices.map((choice) => {
               const isSel = selected === choice.key;
               const showMark = revealed;
@@ -215,13 +201,13 @@ export function SessionScreen({
                   disabled={revealed}
                   onClick={() => onSelect(question.id, choice.key)}
                   className={cn(
-                    "flex w-full min-h-16 items-start gap-3 rounded-2xl border px-3.5 py-3.5 text-left text-base transition-all",
+                    "flex w-full min-h-16 min-w-0 max-w-full items-start gap-3 overflow-hidden rounded-2xl border px-3.5 py-3.5 text-left text-base break-words [overflow-wrap:anywhere] transition-all",
                     "focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
                     "active:scale-[0.99]",
                     !showMark &&
                       (isSel
                         ? "border-primary bg-primary/8 shadow-[inset_0_0_0_1px_var(--primary)]"
-                        : "border-border bg-background hover:border-primary/40 hover:bg-accent/60"),
+                        : "border-border bg-white hover:border-primary/40 hover:bg-accent/60"),
                     showMark &&
                       isAns &&
                       "border-correct bg-correct/10 shadow-[inset_0_0_0_1px_var(--correct)]",
@@ -247,7 +233,7 @@ export function SessionScreen({
                   >
                     {choice.key}
                   </span>
-                  <span className="min-w-0 flex-1 text-[15px] leading-snug break-words">
+                  <span className="min-w-0 flex-1 text-[15px] leading-snug break-words [overflow-wrap:anywhere]">
                     {choice.text}
                   </span>
                   {showMark && isAns && (
@@ -274,7 +260,7 @@ export function SessionScreen({
                 {isCorrect ? "Correct" : `Answer: ${question.answer}`}
               </p>
               {question.explanation ? (
-                <p className="text-sm leading-relaxed text-pretty break-words text-foreground/85">
+                <p className="min-w-0 text-sm leading-relaxed text-pretty break-words [overflow-wrap:anywhere] text-foreground/85">
                   {question.explanation.replace(/\s*Domain\(s\):.*$/i, "")}
                 </p>
               ) : (

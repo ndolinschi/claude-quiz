@@ -6,6 +6,7 @@ import {
   DEFAULT_SETUP,
   QUESTION_BANK,
   buildSession,
+  normalizeSetup,
   scoreSession,
   type SetupConfig,
 } from "@/lib/quiz";
@@ -49,7 +50,7 @@ export function QuizApp() {
       return;
     }
 
-    let sessionItems = buildSession(config);
+    let sessionItems = buildSession(config, progress.store.answered);
     // Clamp to remaining daily quota if on free tier
     if (!progress.isPro && sessionItems.length > progress.remainingQuota) {
       sessionItems = sessionItems.slice(0, progress.remainingQuota);
@@ -106,7 +107,7 @@ export function QuizApp() {
         : null;
 
     setItems(restoredItems);
-    setConfig(active.config);
+    setConfig(normalizeSetup(active.config));
     setIndex(Math.min(active.index, restoredItems.length - 1));
     setAnswers(active.answers || {});
     setStartedAt(startedAtMs);
