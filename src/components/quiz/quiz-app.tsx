@@ -11,11 +11,12 @@ import {
 } from "@/lib/quiz";
 import type { ActiveSession } from "@/lib/progress-store";
 import { useProgress } from "@/hooks/use-progress";
+import { GuideScreen } from "./guide-screen";
 import { ResultsScreen } from "./results-screen";
 import { SessionScreen } from "./session-screen";
 import { SetupScreen } from "./setup-screen";
 
-type Phase = "setup" | "quiz" | "results";
+type Phase = "setup" | "quiz" | "results" | "guide";
 
 export function QuizApp() {
   const progress = useProgress();
@@ -232,6 +233,10 @@ export function QuizApp() {
     );
   }
 
+  if (phase === "guide") {
+    return <GuideScreen onBack={() => setPhase("setup")} />;
+  }
+
   return (
     <SetupScreen
       config={config}
@@ -243,6 +248,7 @@ export function QuizApp() {
       onUnlockDebugPro={progress.setDebugPro}
       onResumeSession={resume}
       onDiscardResume={progress.clearActiveSession}
+      onOpenGuide={() => setPhase("guide")}
     />
   );
 }

@@ -22,7 +22,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Correct.",
+    "explanation": "Glob finds files by name and Grep searches their contents, which is how the tools reference says to map a codebase without reading every file. Language-specific Bash (npm, cargo) can list declared dependencies, but it misses undeclared import edges and only works when that toolchain exists. Reading every file or an external visualizer blows the context window. Doc idea: Tools reference, Glob and Grep.",
     "domains": [
       "Tools",
       "MCP"
@@ -505,7 +505,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "claude --resume restores the full transcript, including old tool results, so a long support thread consumes the context window again (sessions: what a resumed session restores). A summary-plus-fresh start drops stale turns. Resume is not free, and it does not 'guarantee' memory the fresh prompt cannot also state. Doc idea: Manage sessions.",
     "domains": [
       "MCP"
     ],
@@ -538,7 +538,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "A non-fork subagent starts with a fresh context. It does not see the parent transcript, skills already invoked, or files already read (subagents: what loads at startup). It does get its own system prompt, a tools list, and project CLAUDE.md unless omitClaudeMd is set. Credentials are not the documented non-inheritance. Doc idea: Subagents, what loads at startup.",
     "domains": [
       "Subagents",
       "Prompting",
@@ -574,7 +574,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "A slot that can vanish between lookup and book is a race. Combining the steps into one tool makes the operation atomic so the model cannot land between them. Retry text in the prompt does not reserve the slot. Richer errors and a hold tool help, but the smallest reliable fix for a two-call race is one operation. Doc idea: tool design for the agent loop (one tool, one effect).",
     "domains": [
       "Subagents",
       "Prompting",
@@ -643,8 +643,8 @@
         "text": "Try Edit again with a larger substring that includes more context"
       }
     ],
-    "answer": "C",
-    "explanation": "Correct.",
+    "answer": "D",
+    "explanation": "When old_string is not unique, the tools reference says to pass a longer string with surrounding context, or set replace_all. Rewriting the whole file with Write is how unrelated edits get dropped. Bash sed bypasses the Edit checks. Asking the user to edit by hand abandons the tool. Doc idea: Tools reference, Edit uniqueness.",
     "domains": [
       "Tools",
       "MCP"
@@ -682,8 +682,8 @@
         "text": "Make the system prompt rule more detailed and explicit with multiple reminders about identity verification"
       }
     ],
-    "answer": "C",
-    "explanation": "",
+    "answer": "B",
+    "explanation": "PreToolUse can deny a tool before it runs (permissionDecision or exit code 2). PostToolUse fires only after the tool succeeded, so it cannot stop process_refund. tool_choice any or required forces some tool, not 'get_customer before refund'. A longer prompt is guidance, and permissions docs say CLAUDE.md does not enforce. A separate verifier that must sign off is the only listed design that can withhold the refund. Doc idea: Hooks, PreToolUse vs PostToolUse.",
     "domains": [
       "MCP",
       "Hooks",
@@ -706,7 +706,7 @@
       },
       {
         "key": "B",
-        "text": "Reduce the number of tools available to that subagent via allowedTools"
+        "text": "Remove the misused tools from that subagent with its tools allowlist or disallowedTools. A query allowedTools list only auto-approves; it does not remove tools."
       },
       {
         "key": "C",
@@ -717,8 +717,8 @@
         "text": "Add a validation step in the coordinator that rejects bad requests"
       }
     ],
-    "answer": "C",
-    "explanation": "",
+    "answer": "B",
+    "explanation": "PostToolUse cannot validate a call before it executes. The subagents page restricts capability with the tools allowlist or disallowedTools. A stricter system prompt is not enforcement. Coordinator rejection after the fact is later than removing the bad tool. Doc idea: Subagents, available tools; Hooks, PreToolUse.",
     "domains": [
       "Subagents",
       "Permissions",
@@ -757,7 +757,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "CLAUDE.md imports other files with @path/to/file. That is how you keep the main file short. The choice's '@import' wording is loose; the syntax is @path. Imports still load at launch, so they do not shrink context. Path-scoped .claude/rules/ load only when a matching file is read, which is a different feature. Doc idea: Memory, import additional files.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -789,8 +789,8 @@
         "text": "Summarize findings to date and start a fresh session with the new research direction"
       }
     ],
-    "answer": "C",
-    "explanation": "",
+    "answer": "B",
+    "explanation": "Subagents are meant to be invoked again with a narrow task message (common pattern: chain subagents). A fork inherits the whole conversation, which is the opposite of a small gap fill (subagents: fork the current conversation). Queuing everything in one coordinator call or starting over throws away the working split. Doc idea: Subagents, chain subagents.",
     "domains": [
       "Subagents",
       "Architecture"
@@ -824,7 +824,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Correct.",
+    "explanation": "After Write, Read the file back so the agent checks that the bytes on disk match the migration it intended. Running the migration can apply it for real. Handing the path to the user without a check skips verification the agent loop is built for. Doc idea: Agent loop, read after you write.",
     "domains": [
       "Tools",
       "MCP"
@@ -862,7 +862,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "Grep finds the auth entry points; Read follows only those files and their calls. That stays inside the context budget (tools reference; keep context efficient). Parallel subagents are right for a broad sweep, but this question is one architecture the new engineer must understand in order. Reading every keyword hit, or stopping at README, either floods or starves the window. Doc idea: Tools reference, Grep then Read.",
     "domains": [
       "Tools",
       "MCP",
@@ -904,7 +904,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Correct.",
+    "explanation": "Tool results accumulate. At 70% full, another multi-tool turn can hit the window before the refund is done (context window: what consumes context). A summary plus a fresh session keeps the facts and drops the raw history. Summaries are not more accurate than the history, and a fresh session is not automatically 'smarter'. Doc idea: Context window, compaction and clear.",
     "domains": [
       "MCP"
     ],
@@ -937,7 +937,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "The tools reference states Glob results are sorted by modification time and capped at 100 files. That is the documented difference from a raw find. Glob does traverse directories, does not search file contents (that is Grep), and pattern portability is not the primary claim the page makes. Doc idea: Tools reference, Glob tool behavior.",
     "domains": [
       "Tools",
       "MCP"
@@ -974,7 +974,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "A subagent only returns its final message to the parent. The parent then passes that text into the next Agent call (chain subagents). The synthesis agent does not see the others' transcripts and does not share a database. Giving it both tools collapses the split the coordinator is for. Passing only a coordinator summary also works, but the documented pattern is to pass the prior results as the next task message. Doc idea: Subagents, chain subagents.",
     "domains": [
       "Subagents",
       "Architecture"
@@ -1007,7 +1007,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "When the main window starts inventing generic classes, the specific reads have been crowded out. Summarize the rendering facts, then spawn a subagent whose task includes that summary (context window: use subagents so raw reads stay out of the parent). Clearing everything discards the findings. Staying in the bloated window, or exploring physics with no rendering summary, repeats the failure. Doc idea: Context window, delegate large reads.",
     "domains": [
       "Tools",
       "MCP",
@@ -1047,7 +1047,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "The agent already explained the bill and confirmed eligibility. The refund tool timed out, so it must not claim the refund was processed. Immediate escalation throws away a resolution that is otherwise ready. Infinite retries hold the customer. State the facts, the outage, and the choice to escalate or retry. Doc idea: tool results are data the agent must not contradict (agent loop).",
     "domains": [
       "MCP"
     ],
@@ -1077,8 +1077,8 @@
         "text": "Implement a PostToolUse hook that validates whether lookup_order was called; if not, raise an error preventing process_refund from executing"
       }
     ],
-    "answer": "D",
-    "explanation": "",
+    "answer": "B",
+    "explanation": "A prerequisite 'before process_refund is callable' has to run before the tool. PostToolUse runs after success, so it cannot block the call (hooks reference). tool_choice any does not order get_customer then lookup_order. A prompt is not programmatic. An orchestration sequence that only exposes process_refund after the lookups actually enforces the order. The hook that would deny the call is PreToolUse, which is not listed. Doc idea: Hooks, PreToolUse.",
     "domains": [
       "Tools",
       "MCP",
@@ -1113,11 +1113,11 @@
       },
       {
         "key": "D",
-        "text": "Incorrect. Skipping to another tool doesn't address the error. Retryable errors should be retried, not skipped. E The errorCategory determines whether the error is retried"
+        "text": "The errorCategory field determines whether the error is retried"
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "The agent loop feeds the tool result back to the model, which then decides the next call (how tool use works). A result marked retryable is a signal to try the same operation again, not to skip tools or to treat every error the same. errorCategory may classify the failure; the question's retry signal is isRetryable. Claude Code does not hide a separate auto-retry that ignores the model. Doc idea: Agent loop, tool results.",
     "domains": [
       "MCP",
       "Memory/CLAUDE.md"
@@ -2309,7 +2309,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "tool_choice auto may return prose. tool_choice type any requires the model to call one of the provided tools (Messages API). That gives a tool call without a prior classifier and without collapsing every document type into one schema. Prompt-only 'you must use a tool' is not a guarantee. Doc idea: Messages API, tool_choice any.",
     "domains": [
       "Prompting"
     ],
@@ -2758,7 +2758,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "-p / --print runs Claude Code without the interactive UI and prints the result (CLI reference). It does not by itself skip permission prompts; CI still needs a permission mode or allow rules. It is not preview, parallel, or a profiler. Doc idea: CLI reference, --print.",
     "domains": [
       "Tools"
     ],
@@ -2789,7 +2789,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "Print mode can request validated JSON with --json-schema along with --output-format json (CLI reference). The other flag names are not in that reference. Doc idea: CLI reference, --json-schema.",
     "domains": [
       "Tools"
     ],
@@ -2860,7 +2860,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "A check that flags real idioms should be turned off until the criteria include examples of those idioms. Confidence filters and 'be less aggressive' hide the bad rule instead of fixing it. Manual approval of every comment does not repair the criterion. Doc idea: Prompt engineering, examples define the behavior you want.",
     "domains": [
       "Prompting"
     ],
@@ -2891,7 +2891,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "A hundreds-of-files diff does not fit one context. Review file by file first, then a short cross-file pass. One mega-review overflows the window. Skipping 'small' files drops real bugs. Extra independent reviewers multiply the same flood. Doc idea: Context window, keep each pass small.",
     "domains": [
       "Tools"
     ],
@@ -2922,7 +2922,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "Two fresh reviews see different misses. That is the point of a second pass, not a claim that bias disappears or that setup is simpler. Speed is a side effect, not why the second read catches bugs. Doc idea: review isolation (subagents start fresh).",
     "domains": [
       "Tools"
     ],
@@ -2953,7 +2953,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "Return structured fields the model can branch on: retriable false for a business rule, plus a customer-facing sentence. Parsing free text with few-shot examples fails the next wording change. A pre-check tool does not label the error the refund tool itself returns. Auto-retry only inside the tool helps technical faults, but the model still needs the structured business error. Doc idea: tool results should be structured (agent loop).",
     "domains": [
       "MCP"
     ],
@@ -2984,7 +2984,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Correct.",
+    "explanation": "Send the validation error back as the next user message and ask for a corrected tool call. The same prompt will repeat the same range-in-a-float mistake. A larger model or temperature 0 does not teach the schema. Pre-processing documents helps formats, not this retry. Doc idea: Messages API, follow-up turn with the error.",
     "domains": [
       "Tools"
     ],
@@ -3015,7 +3015,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "A tool whose input schema is the function shape forces JSON the API can parse. Examples help style but do not reject invalid syntax. Asking the model to 'validate first' is still prose. A linter after the fact is a check, not the generation contract. Doc idea: Messages API, tool input schema.",
     "domains": [
       "Memory/CLAUDE.md",
       "Prompting"
@@ -3034,10 +3034,6 @@
     "stem": "Scenario: Customer Support Resolution Agent You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high ambiguity requests like returns, billing disputes, and account issues. It has access to backend systems through custom MCP tools (get_customer, lookup_order, process_refund, escalate_to_human). Target: 80%+ first contact resolution while knowing when to escalate. A customer says they are frustrated, have explained the issue twice, and want to talk to a real person now. The agent has not yet called any tools to investigate the account. Question: What should the agent do?",
     "choices": [
       {
-        "key": "A",
-        "text": "You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate. A customer says they are frustrated, have explained the issue twice, and want to talk to a real person now. The agent has not yet called any tools to investigate the account. What should the agent do?"
-      },
-      {
         "key": "B",
         "text": "First call get_customer and lookup_order to gather account context, then escalate."
       },
@@ -3047,11 +3043,15 @@
       },
       {
         "key": "D",
-        "text": "Briefly explain what the agent can help with and offer to resolve the issue quickly, escalating only if the customer repeats the request. E Immediately call escalate_to_human with the conversation history. Answer: E"
+        "text": "Briefly explain what the agent can help with and offer to resolve the issue quickly, escalating only if the customer repeats the request."
+      },
+      {
+        "key": "E",
+        "text": "Immediately call escalate_to_human with the conversation history."
       }
     ],
-    "answer": "D",
-    "explanation": "",
+    "answer": "E",
+    "explanation": "The customer has already asked for a person and has explained the issue twice. Call escalate_to_human with the history. Investigating first, one more question, or a pitch to stay ignores that request. The original choice A was a duplicated stem from a bad parse and is not an action. Doc idea: the escalate tool exists for an explicit handoff (MCP tools).",
     "domains": [
       "MCP"
     ],
@@ -3082,7 +3082,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "A strict schema plus normalization rules in the prompt is what the model fills. Post-processing can fix leftovers, but it cannot invent fields the model skipped. Voting across attempts and one call per field multiply cost without a contract. Doc idea: Prompt engineering, schema plus examples.",
     "domains": [
       "Prompting"
     ],
@@ -3113,7 +3113,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "One tool with a clear description and an operation parameter lets the model pick list, integrity, or performance. Three tools are fine when the operations differ a lot, but here they share one schema. One tool per database, or always running every operation, hides the choice. Doc idea: MCP tools, one tool with an explicit parameter.",
     "domains": [
       "MCP"
     ],
@@ -3144,7 +3144,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "An optional other plus a detail string catches reviews the enum did not name, without making the catch-all required. Adding only more enums still misses the next surprise. A required other forces noise into every comment. Doc idea: structured output, optional escape fields.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -3176,8 +3176,8 @@
         "text": "Cannot be used for code review tasks"
       }
     ],
-    "answer": "C",
-    "explanation": "",
+    "answer": "A",
+    "explanation": "The Message Batches guide says most batches finish in under an hour and expire at 24 hours. That latency window is the constraint to plan for. The same page says batches accept tool use and multi-turn messages, so 'no tool calling' is false. They are not prepaid, and they are not banned for code review. Doc idea: Message Batches API, batch limitations.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -3210,7 +3210,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "Each step is defined before you start, so prompt chaining is the fit. Dynamic decomposition is for when the next step depends on what you discover. 'Both equally' ignores that dependency shape. Doc idea: Prompt engineering, prompt chaining.",
     "domains": [
       "Memory/CLAUDE.md",
       "Prompting"
@@ -3245,7 +3245,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "Batches may take up to 24 hours. Submitting every 6 hours leaves a document that arrives just after a cutoff still inside a 30-hour SLA (6 hours wait plus 24 hours processing). A 4-hour cadence also works but is not required. End of day plus 24 hours can miss 30 hours. Real-time forgoes the 50% batch price. Doc idea: Message Batches API, 24-hour expiration and 50% price.",
     "domains": [
       "Tools"
     ],
@@ -3276,7 +3276,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "The return is eligible now, but the customer has asked for a person. Acknowledge that, say it can be finished immediately, and offer to complete it or escalate. Processing with no offer overrides the request. Escalating with no offer throws away a done case. More questions delay both. Doc idea: escalate tool versus finishing when the tool result already says eligible.",
     "domains": [
       "MCP"
     ],
@@ -5090,7 +5090,7 @@
     "choices": [
       {
         "key": "A",
-        "text": "Set allowedTools in the Task definition to include only Read, Write (for test files), and Grep"
+        "text": "Set tools on the subagent definition to only Read, Write (for test files), and Grep"
       },
       {
         "key": "B",
@@ -5106,7 +5106,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "A subagent's tools field is an allowlist (subagents: available tools). Set it to Read, Grep, and Write if tests must be written, and leave Edit of source off the list. A prompt saying 'do not touch source' is not a limit. A one-off tool is not a subagent. Trust is not a control. Note: the query option allowedTools only auto-approves; it does not remove tools. The subagent field that removes them is tools or disallowedTools. Doc idea: Subagents, control tool access.",
     "domains": [
       "Tools",
       "Subagents",
@@ -5147,7 +5147,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "Correct.",
+    "explanation": "The scenario already has specialists by source: web, documents, then synthesis and report. Partitioning the search by source type matches that split and lets those subagents run in parallel (subagents: run parallel research). Partition by topic or by output format mixes the tools. A strict phase pipeline is the other pattern, but the question asks for the partition that parallelizes retrieval. Doc idea: Subagents, parallel research.",
     "domains": [
       "Subagents",
       "Architecture"
@@ -5180,7 +5180,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "Generate the new function, Write or Edit it, then Read it back. A swarm of tiny edits without a read does not confirm the file. Writing once with no read skips the check. A tool_choice loop that only proposes to the user does not finish the refactor. Doc idea: Tools reference, Read then Edit or Write, then Read again.",
     "domains": [
       "Tools",
       "MCP"
@@ -5219,7 +5219,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "MCP servers for a subagent are named on that agent, not inherited as 'whatever the user configured' with a runtime filter (subagents: mcpServers field). A single root file plus hope is not isolation. ~/.claude.json user servers load for every project, not per subagent. Separate env files do not select MCP tools. Doc idea: Subagents, scope MCP servers.",
     "domains": [
       "MCP",
       "Subagents",
@@ -5253,8 +5253,8 @@
         "text": "All of the above"
       }
     ],
-    "answer": "D",
-    "explanation": "",
+    "answer": "B",
+    "explanation": "'All of the above' includes shipping files with no check, which does not ensure naming or placement. Run a validator with Bash (linter, path check) after Write. Glob can see names, but it does not fail a wrong write by itself. Doc idea: Agent loop, verify with Bash.",
     "domains": [
       "Tools",
       "MCP"
@@ -5292,7 +5292,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "Retry network timeouts inside the tool with backoff, and return filter errors immediately with the bad parameter. A boolean on every error is useful, but the tool can already retry the transient case so the model does not loop. Retrying syntax errors wastes calls. Few-shot text does not change the tool. Doc idea: tool results, retryable versus not.",
     "domains": [
       "Subagents",
       "Prompting",
@@ -5327,7 +5327,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "The $500 gate has to live inside process_reimbursement, which auto-pays at or under the line and opens an approval above it. A boolean the model sets can be set true. A pre-tool hook that only adds a flag still trusts the model later. Two tools plus a prompt are not tamper-proof. Doc idea: Permissions, rules are enforced outside the prompt; put the threshold in the tool.",
     "domains": [
       "Subagents",
       "Hooks",
@@ -5364,7 +5364,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "Track the model's reported confidence over time. A drop is a signal to inspect, not proof by itself. Monthly samples and a quarterly suite are slower. Assuming accuracy is constant is how drift hides. Doc idea: Prompt engineering, measure against your success criteria.",
     "domains": [
       "Tools"
     ],
@@ -5758,11 +5758,11 @@
       },
       {
         "key": "D",
-        "text": "Define allowedTools to include only a vetted 'analyze_document' tool with explicit read permissions and access logging"
+        "text": "Set that subagent's tools allowlist to only a vetted analyze_document tool that checks access and logs reads. A query allowedTools list only auto-approves; it does not remove tools."
       }
     ],
     "answer": "D",
-    "explanation": "Apply the principle of least privilege. Scope allowedTools to only what the subagent needs (e.g., 'analyze_document' but not 'delete_document' or 'export_raw'). Ensure the tool itself validates permissions and logs accesses. This limits the subagent's capabilities and provides an audit trail. Combine with MCP server scoping for defense in depth Domain(s): Tool Design & MCP Integration",
+    "explanation": "Least privilege for a subagent is its tools allowlist (or disallowedTools), not a query allowedTools list. The agent loop page says allowedTools only auto-approves; tools not listed stay available. The subagents page says the tools field actually restricts that agent. The tool itself should still check access and log reads. A prompt, a broad MCP scope, or giving every reader does not enforce the limit. Doc idea: Subagents, available tools.",
     "domains": [
       "Tools",
       "MCP",
@@ -7181,7 +7181,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "A number plus a required source count is something you can reject in code. A confidence enum without a count is easier to fake. A notes field is prose. 'The wording will show it' is not a field. Doc idea: structured output, required evidence.",
     "domains": [
       "Subagents",
       "Prompting",
@@ -7215,7 +7215,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "The build or run config is the entry point the repo actually uses. Glob for files named main misses custom runners and hits decoys. Hard-coding main.py or index.js fails other languages. Asking the user skips the files. Doc idea: Tools reference, Bash for the project's run command, then Read.",
     "domains": [
       "Tools",
       "MCP"
@@ -7253,7 +7253,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "Plan mode reads and does not edit source (permissions: plan mode). A CI job that must write tests or apply a review cannot stay in plan mode; it only adds a planning pass. Keep plan mode for a human review, not for the apply step. Size of the PR does not change that. Doc idea: Permissions, plan mode.",
     "domains": [
       "Tools"
     ],
@@ -7284,7 +7284,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "Batches are for work that can wait, at 50% price, not for the live synthesis turn (Message Batches). Use them for the slow first research fan-out. They are not incompatible with tools, and they are not the right default for every coordinator call. Doc idea: Message Batches API.",
     "domains": [
       "Subagents",
       "Architecture"
@@ -7317,7 +7317,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "Match the comments already in the repo, and add a line only where the decision is not obvious. Commenting every line and writing none are both worse. Docstrings on every function are a style the repo may not use. Doc idea: Memory, match project conventions in CLAUDE.md.",
     "domains": [
       "Tools",
       "MCP"
@@ -7355,7 +7355,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "Read, Grep, and Glob do not edit files (tools reference: those calls are not writes). That set is a static review. It cannot generate docs by writing, cannot fix code, and cannot 'optimize' by editing. Doc idea: Tools reference, read-only tools.",
     "domains": [
       "Tools",
       "Permissions"
@@ -7389,8 +7389,8 @@
         "text": "Search for database migration files (e.g., *.sql, migration files) using Glob"
       }
     ],
-    "answer": "C",
-    "explanation": "",
+    "answer": "B",
+    "explanation": "ORM model files are the schema the application code uses. Read those. Migrations are the history of that schema and should be checked when models are generated, but the living definitions are the models. Asking the user, or claiming 'all three' including that question, is not the search. Doc idea: Tools reference, Glob to the model files then Read.",
     "domains": [
       "Tools",
       "MCP"
@@ -7424,11 +7424,11 @@
       },
       {
         "key": "D",
-        "text": "Add a required_evidence field that lists sources for each claim; validate programmatically that evidence exists E Correct. Optional fields are frequently skipped. Required fields with validation ensure compliance."
+        "text": "Add a required_evidence field that lists sources for each claim; validate programmatically that evidence exists"
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "A required evidence list can be rejected when it is empty. An optional notes field is skipped (the trailing 'Correct' sentence in the old choice D was explanation text, not a fifth answer). 'Always cite' in the prompt is not a check. A later validation tool is extra; the schema is the contract. Doc idea: structured output, required fields.",
     "domains": [
       "Subagents",
       "Prompting",
@@ -7462,8 +7462,8 @@
         "text": "The Batch API supports full multi-turn agentic loops with tool calling"
       }
     ],
-    "answer": "B",
-    "explanation": "",
+    "answer": "D",
+    "explanation": "The Batches page says the worker runs the same server-side agentic loop as the Messages API, and that multi-turn messages and tool use can be batched. A result of pause_turn is continued with a follow-up request; requests are still processed independently. 'No loop inside a batch' is the claim the page rejects. Batches are not text-only and are not faster than the live API. Doc idea: Message Batches API, server tools and the agentic loop.",
     "domains": [
       "MCP"
     ],
@@ -7493,8 +7493,8 @@
         "text": "Batch API limits the number of requests per batch"
       }
     ],
-    "answer": "B",
-    "explanation": "",
+    "answer": "D",
+    "explanation": "A batch is limited to 100,000 requests or 256 MB (batch limitations). That is the constraint for hundreds of reviews. The page also says tool use and multi-turn messages are supported, so reviews do not have to be 'stateless' for that reason. Off-peak and pre-approval are not limits on the API. Doc idea: Message Batches API, batch limitations.",
     "domains": [
       "Tools"
     ],
@@ -7524,8 +7524,8 @@
         "text": "Have the user provide the style guide in their prompt"
       }
     ],
-    "answer": "A",
-    "explanation": "",
+    "answer": "C",
+    "explanation": "If the style guide is a file, Glob finds it and Read loads it (tools reference). An MCP server is for a system that is not already a file. Grep over comments is a guess. Making the user paste it every time is what CLAUDE.md is for, and CLAUDE.md is not an MCP tool. Doc idea: Tools reference, Glob.",
     "domains": [
       "Tools",
       "MCP",
@@ -7563,8 +7563,8 @@
         "text": "Define rules in .claude/rules/ with YAML paths that conditionally load based on agent role"
       }
     ],
-    "answer": "B",
-    "explanation": "",
+    "answer": "A",
+    "explanation": "Each subagent's markdown body is its system prompt, not the parent Claude Code prompt (subagents: write subagent files). Put coordinator rules in the coordinator prompt and research rules in the research prompt. @path imports load for the file that imports them at launch; they do not filter by agent. .claude/rules paths match file paths, not agent roles. A global prompt that agents 'ignore' is not isolation. Non-fork subagents also load project CLAUDE.md unless omitClaudeMd is set, so shared rules still arrive unless you omit them. Doc idea: Subagents, system prompt and tools.",
     "domains": [
       "Subagents",
       "Memory/CLAUDE.md",
@@ -7600,8 +7600,8 @@
         "text": "Resume the session with session --resume and continue from where it left off"
       }
     ],
-    "answer": "D",
-    "explanation": "",
+    "answer": "B",
+    "explanation": "--resume restores the full history (sessions). It does not free a full window. The context window page says the loop compacts automatically near the limit, and /clear or a new session plus a summary is how you continue with less. Increasing the window is not a user switch. Pruning by hand is what /compact does, which is not listed. Export the findings and start fresh is the listed recovery. Doc idea: Sessions and context window, compact versus resume.",
     "domains": [
       "Subagents",
       "Architecture"
@@ -9627,7 +9627,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "Glob and Read the files already written in that language before generating more. That is the tools reference path. General knowledge misses the repo's dialect. An extra MCP language tool is optional, not the first step. Asking the user for 'language expertise' skips the code. Doc idea: Tools reference, Glob then Read.",
     "domains": [
       "Tools",
       "MCP"
@@ -9665,7 +9665,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "Invoices, receipts, and bills share fields and then diverge. A base schema plus type-specific fields keeps the common part and the extra part. One schema for everything forces nulls. Fully separate schemas duplicate the shared fields. Asking the user which type defeats the pipeline. Doc idea: structured output, one schema family.",
     "domains": [
       "Tools"
     ],
@@ -9695,8 +9695,8 @@
         "text": "Cache only unsuccessful lookups"
       }
     ],
-    "answer": "C",
-    "explanation": "",
+    "answer": "B",
+    "explanation": "Cache inside the MCP server for a customer id and a short TTL. The conversation already holds the last tool result, which costs tokens and is not shared with the next session (context window). Skipping cache keeps the 200 ms hit. Caching only failures stores the useless case. Doc idea: MCP server behavior versus context cost.",
     "domains": [
       "MCP"
     ],
@@ -9727,7 +9727,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "Correct.",
+    "explanation": "Read the existing routes first so the new one matches paths, params, and errors (tools reference: read before you write). Starting the feature, an external doc tool, or asking the user to describe the API skip that read. Doc idea: Tools reference, Read.",
     "domains": [
       "Tools",
       "MCP"
@@ -11559,7 +11559,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "A batch can take 24 hours. Submitting every 4 hours keeps a ticket that just missed a window inside a 30-hour SLA (4 + 24 = 28). Every 10 hours or once a day can miss it. Once per PR is not a schedule. Doc idea: Message Batches API, 24-hour expiration.",
     "domains": [
       "Tools"
     ],
@@ -11590,7 +11590,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "Examples of correct types show the pattern tsconfig alone does not (prompt engineering: examples). 'Be careful' does not change the type grammar. Compiler errors are a good second loop, but the question asks what else improves the generation. A bigger window does not add the pattern. Doc idea: Prompt engineering, few-shot examples.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -11624,7 +11624,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Correct.",
+    "explanation": "A failing test names the exact mismatch. That is data for the next edit, not a verdict that the tests are wrong or that quality is a number. Doc idea: Agent loop, feed the tool result back.",
     "domains": [
       "Tools"
     ],
@@ -11655,7 +11655,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "One tool, a clear description, and a parameter for which analysis to run is enough for the model to choose (MCP tool design). Vague description makes it guess. Splitting by language or into three tools is optional, not required, when the inputs are the same. Doc idea: Claude Code MCP, tool descriptions.",
     "domains": [
       "MCP",
       "Memory/CLAUDE.md"
@@ -11690,7 +11690,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "Two or three before-and-after examples fix the error-text style faster than a vague CLAUDE.md line. 'Improve all messages' has no target. A post-check can reject, but it does not show the desired text. Doc idea: Prompt engineering, examples.",
     "domains": [
       "Memory/CLAUDE.md",
       "Prompting"
@@ -11725,7 +11725,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "Put three or four correctly formatted queries in the prompt. A formatter after the fact hides the standard instead of teaching it. 'Follow best practices' and a CLAUDE.md sentence are weaker than the examples themselves. CLAUDE.md is still the right home for a standing rule, but the question asks what makes this generation match. Doc idea: Prompt engineering, few-shot examples.",
     "domains": [
       "Memory/CLAUDE.md",
       "Prompting"
@@ -11760,7 +11760,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "Resume when the goal is the same research; the history is what you paid for (sessions). Start fresh when the goal changes, or the old transcript steers the new task (/clear between tasks). Always-fresh and always-resume are both wrong. Doc idea: Manage sessions, resume versus /clear.",
     "domains": [
       "Subagents",
       "Architecture"
@@ -11794,7 +11794,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "Severity can stay optional with a default, plus an optional category for the odd bug. An 'other' severity is also workable, but a defaulted optional field does not force every bug into a bin. A numeric scale and a closed enum both drop the edge case. Doc idea: structured output, optional fields.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -12982,7 +12982,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Hooks use valid shell variables like CLAUDE_TOOL_ARG_COMMAND and exit code 2 to signal a Guardian block. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "Hooks use valid shell variables like CLAUDE_TOOL_ARG_COMMAND and exit code 2 to signal a Guardian block.",
     "domains": [
       "Tools",
       "Hooks"
@@ -13146,7 +13146,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "CLAUDE.md files are the primary mechanism for providing persistent, project-specific context and constraints to Claude Code. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "CLAUDE.md files are the primary mechanism for providing persistent, project-specific context and constraints to Claude Code.",
     "domains": [
       "Memory/CLAUDE.md",
       "Prompting"
@@ -13250,7 +13250,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "The 'Existing Pattern' trap: Claude's tendency to follow existing code examples often overrides explicit instructions. The fix is to remove the old patterns or add a 'Post ToolUse' hook to block the wrong test runner. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "The 'Existing Pattern' trap: Claude's tendency to follow existing code examples often overrides explicit instructions. The fix is to remove the old patterns or add a 'Post ToolUse' hook to block the wrong test runner.",
     "domains": [
       "Memory/CLAUDE.md",
       "Hooks"
@@ -13283,7 +13283,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "Claude Code supports 'progressive disclosure' via the CLAUDE.md hierarchy. Subdirectory files only activate when Claude is working in those areas, saving tokens and improving focus. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Claude Code supports 'progressive disclosure' via the CLAUDE.md hierarchy. Subdirectory files only activate when Claude is working in those areas, saving tokens and improving focus.",
     "domains": [
       "Memory/CLAUDE.md",
       "Skills"
@@ -13348,7 +13348,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Treating 'Agent Config as Code' (checking .claude directories into Git) is the recommended best practice for collaborative AI development. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Treating 'Agent Config as Code' (checking .claude directories into Git) is the recommended best practice for collaborative AI development.",
     "domains": [
       "Memory/CLAUDE.md",
       "Skills"
@@ -13647,7 +13647,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "A skill at .claude/skills/review-security/SKILL.md is invoked as /review-security. Custom commands were merged into skills; .claude/commands/ still works but skills are the current format (skills reference). A CLAUDE.md heading, a shell alias, and a hook do not create a slash command. Doc idea: Skills, project skills.",
     "domains": [
       "Tools",
       "Memory/CLAUDE.md",
@@ -13668,7 +13668,7 @@
     "choices": [
       {
         "key": "A",
-        "text": "Add ′.env′ and other sensitive file patterns to a ′.claudeignore′ file."
+        "text": "Add a permissions.deny rule such as Read(./.env) and Read(./.env.*) so those files cannot be read."
       },
       {
         "key": "B",
@@ -13684,7 +13684,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "There is no .claudeignore file in the permissions reference. Block secret reads with a deny rule such as Read(./.env) or Read(./.env.*). A first-turn 'do not look' is not enforcement. Read-only / plan mode still reads files. Encrypting files does not stop a process that can decrypt them. The choice text is updated to the deny rule; that is the documented control. Doc idea: Permissions, exclude sensitive files.",
     "domains": [
       "Tools"
     ],
@@ -13715,7 +13715,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "Return the last few relevant events and stable ids. Huge JSON blows the context window (MCP output limits). A prose summary drops the ids the next tool needs. Parallel chunks do not reduce tokens. Doc idea: Claude Code MCP, output limits.",
     "domains": [
       "MCP"
     ],
@@ -13745,8 +13745,8 @@
         "text": "Use a coordinator to split each contract into 10-page segments and delegate extraction tasks to parallel subagents."
       }
     ],
-    "answer": "B",
-    "explanation": "Correct.",
+    "answer": "D",
+    "explanation": "Thousands of 100-page contracts do not belong in one context. Split each contract and delegate extraction to subagents so only summaries return (context window: delegate large reads; subagents: isolate high-volume work). Loading the whole PDF is the expensive option, not the cheap one. Retrieval of only the relevant clauses is also valid, but the listed Agent SDK pattern is the coordinator plus subagents. Doc idea: Context window and subagents.",
     "domains": [
       "Tools",
       "Subagents",
@@ -13781,7 +13781,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "Correct.",
+    "explanation": "A subagent does not see the parent transcript. If the coordinator's prompt said 'cite sources' and the synthesis agent did not, that line was not in the delegation message (subagents: what loads at startup). Missing Citation tool, a bad Task schema, or search URLs can also fail, but the question says the requirement lived only on the coordinator prompt. Doc idea: Subagents, fresh context.",
     "domains": [
       "Subagents",
       "Permissions",
@@ -13818,7 +13818,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Correct.",
+    "explanation": "Prettier-after-write in the hooks guide is a PostToolUse example. A PreToolUse hook can still deny an Edit or Write whose tool_input would fail lint, before the file changes (permissionDecision deny). CLAUDE.md and a skill are guidance. CI after push is too late for the session. The choice says 'modified files', which is the PostToolUse timing; the enforcement that rejects the turn before the write is PreToolUse on the pending content. That is why B is kept, with the timing spelled out. Doc idea: Hooks, PreToolUse deny versus PostToolUse format.",
     "domains": [
       "Memory/CLAUDE.md",
       "Hooks",
@@ -13853,7 +13853,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "Review the diff, then spawn a few parallel subagents on the hardest files so the coordinator stays under the window (subagents: parallel research). Fifteen sequential agents are slow. One context with all 15 files is the overflow. The Batches API is not how the coordinator fans out inside one session. Doc idea: Subagents, isolate high-volume reads.",
     "domains": [
       "Tools",
       "Subagents",
@@ -13887,7 +13887,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "The fetch path used with MCP turns HTML into markdown so the model spends fewer tokens than on raw tags. It does not run the page's JavaScript, cache for 24 hours, or bypass logins. Doc idea: Claude Code MCP, WebFetch-style markdown.",
     "domains": [
       "Tools",
       "MCP"
@@ -13919,7 +13919,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "Safety and security boundaries in Claude Code should be enforced with hooks. Hooks are the 'hardware' to CLAUDE.md's 'software' instructions. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Safety and security boundaries in Claude Code should be enforced with hooks. Hooks are the 'hardware' to CLAUDE.md's 'software' instructions.",
     "domains": [
       "Tools",
       "Memory/CLAUDE.md",
@@ -14149,7 +14149,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "The 'Trust but Verify' principle: Architects should use programmatic hooks to validate the AI's output against established security and quality benchmarks. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "The 'Trust but Verify' principle: Architects should use programmatic hooks to validate the AI's output against established security and quality benchmarks.",
     "domains": [
       "Memory/CLAUDE.md",
       "Hooks"
@@ -14213,7 +14213,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "CLAUDE.md serves as the 'Standard Operating Procedures' (SOP) manual for Claude Code, bridging the gap between general knowledge and project-specific reality. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "CLAUDE.md serves as the 'Standard Operating Procedures' (SOP) manual for Claude Code, bridging the gap between general knowledge and project-specific reality.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -14346,7 +14346,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Discipline in planning is what separates 'certified architects' from casual users. It ensures the AI 'measures twice and cuts once' on your codebase. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Discipline in planning is what separates 'certified architects' from casual users. It ensures the AI 'measures twice and cuts once' on your codebase.",
     "domains": [
       "Tools"
     ],
@@ -14602,7 +14602,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Mastering the 'Bash' tool for bulk operations is a key skill for a Claude Architect. It leverages the underlying environment's power rather than relying on the LLM for repetitive manual edits. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Mastering the 'Bash' tool for bulk operations is a key skill for a Claude Architect. It leverages the underlying environment's power rather than relying on the LLM for repetitive manual edits.",
     "domains": [
       "Tools",
       "Skills"
@@ -15004,7 +15004,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "Programmatic hooks in Claude Code serve as 'Local CI,' enforcing project standards before state-changing actions occur. Refer to: [https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization](https://www.google.com/search? q=https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization)",
+    "explanation": "Programmatic hooks in Claude Code serve as 'Local CI,' enforcing project standards before state-changing actions occur.",
     "domains": [
       "Tools",
       "Memory/CLAUDE.md",
@@ -15196,7 +15196,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "Hard security constraints in Claude Code are best implemented through hooks that return exit code 2. Refer to: [http s://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview\\#security](https://www.google.com/search?q=https://docs. anthropic.com/en/docs/agents-and-tools/claude-code/overview%23security)",
+    "explanation": "Hard security constraints in Claude Code are best implemented through hooks that return exit code 2.",
     "domains": [
       "Memory/CLAUDE.md",
       "Hooks"
@@ -15755,7 +15755,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "A tool_result block is sent in a user-role message, tied to the tool_use id (Messages API). There is no tool role. system is the top-level system parameter. assistant is the model's own tool_use. Doc idea: Messages API, tool results.",
     "domains": [
       "Tools"
     ],
@@ -15786,7 +15786,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "If the consumer requires XML, say so in the system prompt and show a few examples. Structured outputs are JSON. tool_choice does not emit XML. Extended thinking does not change the schema. Doc idea: Prompt engineering, specify the format with examples.",
     "domains": [
       "Tools",
       "Prompting"
@@ -15814,11 +15814,11 @@
       },
       {
         "key": "D",
-        "text": "Add 'archive/' to a .claudeignore file at the root."
+        "text": "Add an Edit deny such as Edit(archive/**). A Read deny on that path also blocks Edit and Write there."
       }
     ],
     "answer": "D",
-    "explanation": "Correct.",
+    "explanation": "Stop writes under archive/ with an Edit deny such as Edit(archive/**). A Read deny also blocks Edit and Write on that path (permissions: Read and Edit). .claudeignore is not a documented file. A PostToolUse undo runs after the write. OS read-only also works and is what B says; the permissions page is the Claude Code control, so the repaired choice D states the deny rule. A prompt in the first turn is not enforcement. Doc idea: Permissions, deny rules.",
     "domains": [
       "Tools",
       "Hooks"
@@ -15838,7 +15838,7 @@
       },
       {
         "key": "B",
-        "text": "claude config"
+        "text": "/mcp lists connected MCP tools. Built-in tools are in the tools reference. /config opens settings. There is no claude config tool inventory."
       },
       {
         "key": "C",
@@ -15850,7 +15850,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "There is no `claude config` inventory of every tool. /config opens settings. /mcp lists connected servers and tool counts (commands reference). Built-in tools are listed in the tools reference. `claude status`, `claude list-tools`, and `claude help` are not those commands. The choice text is corrected to the commands that exist. Doc idea: Commands, /mcp and /config.",
     "domains": [
       "Tools"
     ],
@@ -15977,7 +15977,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "CLAUDE.md is the 'source of truth' for project-specific developer experience (DX) in Claude Code. Refer to: [https:// docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization](https://www.google.com/search?q=https://docs.anthropi c.com/en/docs/agents-and-tools/claude-code/customization)",
+    "explanation": "CLAUDE.md is the 'source of truth' for project-specific developer experience (DX) in Claude Code.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -16004,11 +16004,11 @@
       },
       {
         "key": "D",
-        "text": "Add '.env' to the project's .claudeignore file."
+        "text": "Add a permissions.deny rule such as Read(./.env) and Read(**/.env)."
       }
     ],
     "answer": "D",
-    "explanation": "Scoping the agent's workspace via .claudeignore is a critical security best practice for local agentic tools. Refer to: [h ttps://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview\\#security](https://www.google.com/search?q=https://doc s.anthropic.com/en/docs/agents-and-tools/claude-code/overview%23security)",
+    "explanation": "There is no .claudeignore file. The permissions reference blocks reads with a deny rule such as Read(./.env) or Read(**/.env). A hidden OS flag and a CLAUDE.md sentence do not stop Read. 'It is safe because Anthropic built it' is not a control. Doc idea: Permissions, exclude sensitive files.",
     "domains": [
       "Tools",
       "Memory/CLAUDE.md"
@@ -16175,7 +16175,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "CLAUDE.md acts as the persistent 'local memory' for Claude Code, ensuring it adheres to a project's unique Developer Experience (DX) rules. Refer to: [https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization](https ://www.google.com/search?q=https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization)",
+    "explanation": "CLAUDE.md acts as the persistent 'local memory' for Claude Code, ensuring it adheres to a project's unique Developer Experience (DX) rules.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -16300,7 +16300,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "Claude Code is 'Tool-Augmented.' It uses its understanding of the environment to choose the right sequence of actions. Refer to: [https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview](https://docs.anthropic.com/en/docs/ agents-and-tools/claude-code/overview)",
+    "explanation": "Claude Code is 'Tool-Augmented.' It uses its understanding of the environment to choose the right sequence of actions.",
     "domains": [
       "Tools"
     ],
@@ -16584,7 +16584,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Extending Claude Code with 'Skills' allows teams to automate complex, project-specific workflows. Refer to: [https:// docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization](https://www.google.com/search?q=https://docs.anthropi c.com/en/docs/agents-and-tools/claude-code/customization)",
+    "explanation": "Extending Claude Code with 'Skills' allows teams to automate complex, project-specific workflows.",
     "domains": [
       "Memory/CLAUDE.md",
       "Skills"
@@ -16729,7 +16729,7 @@
   {
     "id": "s8-q58",
     "set": 8,
-    "stem": "A developer wants Claude Code to ignore all files in the 'temp/' directory and any files ending in '.log'. What is the correct format for the .claudeignore file?",
+    "stem": "A developer wants permission rules so Claude Code cannot read files in the temp/ directory or any file ending in .log. Which deny rules match?",
     "choices": [
       {
         "key": "A",
@@ -16741,7 +16741,7 @@
       },
       {
         "key": "C",
-        "text": "temp/ .log"
+        "text": "Read(temp/**) and Read(**/*.log)"
       },
       {
         "key": "D",
@@ -16749,7 +16749,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "The .claudeignore file is the primary security and context-management tool for Claude Code, using familiar glob syntax. Refer to the 'Security' section in the Claude Code docs: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview#security",
+    "explanation": "Permission deny rules use gitignore-style paths, for example Read(temp/**) and Read(**/*.log). There is no .claudeignore file and no --exclude or [EXCLUDE] syntax. Doc idea: Permissions, Read and Edit.",
     "domains": [
       "Tools"
     ],
@@ -16780,7 +16780,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Claude Code is designed to be 'Project-Aware.' Sharing configuration and skills via Git ensures the entire team has a consistent developer experience. Refer to: [https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization](https: //www.google.com/search?q=https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization)",
+    "explanation": "Claude Code is designed to be 'Project-Aware.' Sharing configuration and skills via Git ensures the entire team has a consistent developer experience.",
     "domains": [
       "Memory/CLAUDE.md",
       "Skills"
@@ -16943,7 +16943,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "Safety in agentic systems should be 'Layered,' combining prompt instructions with deterministic execution hooks. Refer to: [https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization](https://www.google.com/search?q=http s://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization)",
+    "explanation": "Safety in agentic systems should be 'Layered,' combining prompt instructions with deterministic execution hooks.",
     "domains": [
       "Subagents",
       "Hooks",
@@ -17106,7 +17106,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Claude Code's power comes from its ability to 'Think and Edit' autonomously using its own toolset. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Claude Code's power comes from its ability to 'Think and Edit' autonomously using its own toolset.",
     "domains": [
       "Tools",
       "Memory/CLAUDE.md"
@@ -17382,7 +17382,7 @@
       },
       {
         "key": "B",
-        "text": "Use '.claudeignore' to hide irrelevant directories and sub-projects from the agent's view."
+        "text": "Narrow reads with Grep and Glob, delegate large folders to subagents, and use /compact or /clear. There is no .claudeignore file."
       },
       {
         "key": "C",
@@ -17394,7 +17394,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Effective context management in Claude Code involves 'Scoping' the workspace to keep the agent focused. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview#security",
+    "explanation": "There is no .claudeignore switch that hides folders from the context window. Stop broad reads, delegate to subagents, and /compact or /clear. Grep skips gitignored files; Glob does not, unless CLAUDE_CODE_GLOB_NO_IGNORE=false. Prompt-cache TTL and a different model do not remove files from context. Doc idea: Context window; tools reference.",
     "domains": [
       "Memory/CLAUDE.md",
       "Prompting"
@@ -17490,7 +17490,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Agentic 'Project Inception' works best when the agent has a clear, written set of requirements to reference. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Agentic 'Project Inception' works best when the agent has a clear, written set of requirements to reference.",
     "domains": [
       "Architecture"
     ],
@@ -17554,7 +17554,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "CLAUDE.md is the most important file for customizing the 'Developer Experience' of Claude Code. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "CLAUDE.md is the most important file for customizing the 'Developer Experience' of Claude Code.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -17680,7 +17680,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "Show several real SKU shapes in the examples. 'Think step by step' does not fix a format. A regex tool can validate after the fact. A model name does not change the format. Doc idea: Prompt engineering, diverse examples.",
     "domains": [
       "Prompting"
     ],
@@ -17711,7 +17711,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "A 30-second query should not be a blocking tool with a poll loop, and it should not be split into fake 3-second tools. Accept an address and deliver the result when the query ends, or background the MCP call (Claude Code backgrounds MCP calls past two minutes). Blocking until 30 seconds holds the turn. Doc idea: Claude Code MCP, long tool calls.",
     "domains": [
       "MCP"
     ],
@@ -17730,7 +17730,7 @@
       },
       {
         "key": "B",
-        "text": "The Monitor class."
+        "text": "Agent options maxTurns and maxBudgetUsd. Result messages report usage and total_cost_usd. There is no Monitor class for token budgets."
       },
       {
         "key": "C",
@@ -17742,7 +17742,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "Turn and spend caps are maxTurns and maxBudgetUsd on the agent options (agent loop: turns and budget). Result messages carry usage and cost. There is no Monitor class for token budgets; Monitor in the tools list is a shell-related tool. The system prompt, an MCP server, and the user message do not count tokens. Doc idea: Agent loop, maxTurns and maxBudgetUsd.",
     "domains": [
       "MCP",
       "Prompting"
@@ -17899,7 +17899,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Hard safety and quality constraints should be moved out of the prompt and into the hook system. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "Hard safety and quality constraints should be moved out of the prompt and into the hook system.",
     "domains": [
       "Memory/CLAUDE.md",
       "Hooks",
@@ -17966,7 +17966,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "The correct answer is C. claude –model haiku.claude –model haiku applies only to the current session and does not alter your permanent global configuration.Alternatively, once you are already inside an active interactive Claude Code session, you can use the slash command /model haiku or just /model to open an interactive picker to change models on the fly.Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "The correct answer is C. claude –model haiku.claude –model haiku applies only to the current session and does not alter your permanent global configuration.Alternatively, once you are already inside an active interactive Claude Code session, you can use the slash command /model haiku or just /model to open an interactive picker to change models on the fly.",
     "domains": [
       "Tools"
     ],
@@ -18098,7 +18098,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "CLAUDE.md serves as the 'External Memory' for the agent, providing a stable reference point across sessions. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "CLAUDE.md serves as the 'External Memory' for the agent, providing a stable reference point across sessions.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -18152,7 +18152,7 @@
       },
       {
         "key": "B",
-        "text": "In the 'Agent' configuration or a custom 'Monitor' class within the SDK."
+        "text": "Set maxTurns on the agent options (ClaudeAgentOptions). There is no Monitor class that enforces a five-call policy."
       },
       {
         "key": "C",
@@ -18164,7 +18164,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Production-grade agents require 'Execution Limits' to prevent runaway costs and infinite loops. Refer to: https://github.com/anthropics/claude-agent-sdk-python",
+    "explanation": "Cap tool-use turns with maxTurns and spend with maxBudgetUsd on the agent options. That is agent configuration, not an MCP server and not a prompt. There is no Monitor class that counts a five-call budget. Doc idea: Agent loop, turns and budget.",
     "domains": [
       "MCP",
       "Prompting"
@@ -18212,7 +18212,7 @@
   {
     "id": "s9-q45",
     "set": 9,
-    "stem": "A developer is using Claude Code and wants to ignore all '.tmp' files and any directory named 'build'. What should the '.claudeignore' file look like?",
+    "stem": "A developer wants Claude Code's file tools to skip .tmp files and any directory named build. Which permission deny patterns are correct?",
     "choices": [
       {
         "key": "A",
@@ -18220,7 +18220,7 @@
       },
       {
         "key": "B",
-        "text": ".tmp /build/"
+        "text": "Read(**/*.tmp) and Read(**/build/**)"
       },
       {
         "key": "C",
@@ -18232,7 +18232,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Proper context pruning with .claudeignore improves security and prevents the agent from wasting tokens on junk files. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview#security",
+    "explanation": "There is no .claudeignore file. Keep file tools off scratch trees with Read denies such as Read(**/*.tmp) and Read(**/build/**). --exclude and IGNORE lines are not settings syntax. Doc idea: Permissions, deny rules.",
     "domains": [
       "Architecture"
     ],
@@ -18426,7 +18426,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Hooks use valid shell variables like CLAUDE_TOOL_ARG_COMMAND and exit code 2 to signal a Guardian block. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "Hooks use valid shell variables like CLAUDE_TOOL_ARG_COMMAND and exit code 2 to signal a Guardian block.",
     "domains": [
       "Tools",
       "Hooks"
@@ -18684,7 +18684,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "CLAUDE.md acts as the 'Operational Playbook' for the agent, preventing it from deviating from project standards. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "CLAUDE.md acts as the 'Operational Playbook' for the agent, preventing it from deviating from project standards.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -18875,7 +18875,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Standardizing agent behavior is best handled by committing a CLAUDE.md file to the repository. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "Standardizing agent behavior is best handled by committing a CLAUDE.md file to the repository.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -19189,11 +19189,11 @@
       },
       {
         "key": "D",
-        "text": "Use a '.claudeignore' file to exclude '.env' files."
+        "text": "Deny Read of secret files, for example Read(./.env) and Read(./secrets/**)."
       }
     ],
     "answer": "D",
-    "explanation": "Security-conscious developers use .claudeignore as a 'Deny-List' for credentials. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview#security",
+    "explanation": "Secret files are blocked with permissions.deny Read rules, for example Read(./.env) and Read(./secrets/**). Renaming to .secret, relying on PII filters, or writing 'never read .env' in CLAUDE.md does not enforce the boundary. Doc idea: Permissions, exclude sensitive files.",
     "domains": [
       "Tools",
       "Memory/CLAUDE.md"
@@ -19343,7 +19343,7 @@
       },
       {
         "key": "C",
-        "text": "Add 'node-modules/' to the project's '.claudeignore' file."
+        "text": "If node_modules is gitignored, Grep skips it by default. Glob does not, unless CLAUDE_CODE_GLOB_NO_IGNORE=false. Read can still open a known path, so use a permissions deny for secrets."
       },
       {
         "key": "D",
@@ -19351,7 +19351,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Pruning irrelevant directories is a critical step for efficiency. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview#security",
+    "explanation": "node_modules is usually gitignored. Grep skips gitignored files by default; Glob does not, unless CLAUDE_CODE_GLOB_NO_IGNORE=false. There is no .claudeignore. Hiding the folder in the OS or renaming it is not the control. A prompt does not stop a Read of a path the model already knows. Doc idea: Tools reference, Grep and gitignore.",
     "domains": [
       "Prompting"
     ],
@@ -19475,7 +19475,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "The primary working directory is the folder you launch in (permissions: working directories). Starting in /src is that scope. It is not a hard fence: reads outside can still prompt unless you set a deny or blockReadsOutsideWorkingDirectories. A fake ALLOWED_DIR and putting /src in an ignore file do not restrict edits. A PreToolUse hook can add a fence, but the documented default scope is the launch directory. Doc idea: Permissions, working directories.",
     "domains": [
       "Tools",
       "Hooks"
@@ -19499,15 +19499,15 @@
       },
       {
         "key": "C",
-        "text": "claude diff"
+        "text": "/diff"
       },
       {
         "key": "D",
         "text": "claude log"
       }
     ],
-    "answer": "A",
-    "explanation": "",
+    "answer": "C",
+    "explanation": "/diff reviews the working tree and the edits made this session (commands reference). /status opens Settings on the Status tab (version, model, account). There is no `claude list-changes` or `claude log` for this. The choice is the in-session /diff command, not a `claude diff` binary. Doc idea: Commands, /diff.",
     "domains": [
       "Tools"
     ],
@@ -19530,11 +19530,11 @@
       },
       {
         "key": "C",
-        "text": "Tools and Transports"
+        "text": "Resources"
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "Resources are how an MCP server exposes documents: resources/list and resources/templates/list (MCP resources spec; Claude Code 'Use MCP resources'). Tools are actions. Transports carry JSON-RPC. The old choice C, 'Tools and Transports', is the wrong primitive; the repaired choice is Resources. Doc idea: MCP resources.",
     "domains": [
       "MCP"
     ],
@@ -19565,7 +19565,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "Project-wide instructions go in CLAUDE.md (memory). README is for humans. There is no .claude-globals.json. .env is secrets, and you should deny reads of it. Doc idea: Memory, CLAUDE.md.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -19596,7 +19596,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "In Zod, z.string() is required unless you call .optional(). z.string().required() and z.mandatoryString() are not the API. A bare 'string' is not a schema. Doc idea: tool input schemas (Messages API / MCP inputSchema).",
     "domains": [
       "Tools"
     ],
@@ -19627,7 +19627,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "/theme changes the color theme inside the session, including light, dark, auto, and custom themes (commands reference). `claude config --theme` and a .claudetheme.json file are not that command. Themes are supported. Doc idea: Commands, /theme.",
     "domains": [
       "Tools"
     ],
@@ -19657,8 +19657,8 @@
         "text": "1 hour."
       }
     ],
-    "answer": "A",
-    "explanation": "",
+    "answer": "D",
+    "explanation": "Prompt caching offers ttl 5m by default and ttl 1h as the longest duration (prompt caching). 5 minutes is not the maximum. 24 hours and indefinite are not cache TTLs. Doc idea: Prompt caching, 1-hour TTL.",
     "domains": [
       "Prompting"
     ],
@@ -19689,7 +19689,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "Hooks allow developers to extend agent capabilities with local environment automation. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "Hooks allow developers to extend agent capabilities with local environment automation.",
     "domains": [
       "Memory/CLAUDE.md",
       "Hooks"
@@ -19913,7 +19913,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "CLAUDE.md is the contextual glue that prevents the agent from using outdated syntax. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "CLAUDE.md is the contextual glue that prevents the agent from using outdated syntax.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -20219,7 +20219,7 @@
       },
       {
         "key": "B",
-        "text": "It respects '.gitignore' and automatically excludes those files."
+        "text": "Grep skips gitignored files by default. Glob does not, unless CLAUDE_CODE_GLOB_NO_IGNORE=false. Read can still open a known gitignored path. .gitignore is not a security boundary."
       },
       {
         "key": "C",
@@ -20231,7 +20231,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Leveraging existing infrastructure makes Claude Code easier to deploy in large projects. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview#security",
+    "explanation": "Grep skips gitignored files. Glob does not, by default, and Read can still open a known gitignored path. .gitignore is not a security boundary; use permissions.deny for secrets. There is no step that copies rules into a .claudeignore file. Doc idea: Tools reference, Glob tool behavior.",
     "domains": [
       "Tools"
     ],
@@ -20324,7 +20324,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Claude Code is git-native; leveraging the underlying VCS is the best way to manage history. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Claude Code is git-native; leveraging the underlying VCS is the best way to manage history.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -20355,7 +20355,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "Understanding the Trigger-Action relationship is essential for Claude Code automation. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "Understanding the Trigger-Action relationship is essential for Claude Code automation.",
     "domains": [
       "Permissions",
       "Hooks"
@@ -20670,7 +20670,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "Plan mode is a core human-in-the-loop feature for verifying agentic intent in Claude Code. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Plan mode is a core human-in-the-loop feature for verifying agentic intent in Claude Code.",
     "domains": [
       "Architecture"
     ],
@@ -20769,7 +20769,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Claude Code does not have a generic '/tools' slash command. MCP connections and tools are managed via the CLI using 'claude mcp list'. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Claude Code does not have a generic '/tools' slash command. MCP connections and tools are managed via the CLI using 'claude mcp list'.",
     "domains": [
       "MCP",
       "Memory/CLAUDE.md"
@@ -20803,7 +20803,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Agentic systems should leverage existing system tools (like git) via well-defined MCP tools for environmental awareness. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Agentic systems should leverage existing system tools (like git) via well-defined MCP tools for environmental awareness.",
     "domains": [
       "Tools",
       "MCP"
@@ -20866,7 +20866,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Custom slash commands are stored as skills in '.claude/skills/' or '.claude/commands/', while CLAUDE.md is for project instructions. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "Custom slash commands are stored as skills in '.claude/skills/' or '.claude/commands/', while CLAUDE.md is for project instructions.",
     "domains": [
       "Memory/CLAUDE.md",
       "Skills"
@@ -20962,7 +20962,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "Security must be deterministic and enforced at the execution layer, not via the model's instructions. Refer to: https://modelcontextprotocol.io/docs/concepts/security Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "Security must be deterministic and enforced at the execution layer, not via the model's instructions. Refer to: https://modelcontextprotocol.io/docs/concepts/security.",
     "domains": [
       "Tools",
       "Prompting"
@@ -21136,7 +21136,7 @@
   {
     "id": "s11-q17",
     "set": 11,
-    "stem": "In Claude Code, you have a '.claudeignore' file that includes 'node_modules/'. However, you want the agent to be able to read the 'package.json' file inside a specific module for dependency checking. How can you achieve this?",
+    "stem": "A permissions.deny list includes Read(node_modules/**). You still want the agent to read package.json inside one module. How do you carve that out?",
     "choices": [
       {
         "key": "A",
@@ -21148,7 +21148,7 @@
       },
       {
         "key": "C",
-        "text": "Add an exception rule to '.claudeignore' using the '!' prefix (e.g., '!node_modules/special-pkg/package.json')."
+        "text": "Add a ! negation in the same permissions file, such as Read(!node_modules/special-pkg/package.json), after the broader deny. A carve-out cannot reopen a directory a rule blocks as a whole."
       },
       {
         "key": "D",
@@ -21156,7 +21156,7 @@
       }
     ],
     "answer": "C",
-    "explanation": ".claudeignore follows standard ignore patterns, including the use of '!' for exclusions. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "A pattern that starts with ! is a gitignore negation inside a deny or ask list in the same settings file. Example: Read(node_modules/**) then Read(!node_modules/special-pkg/package.json). A carve-out cannot reopen a directory that a broader rule blocks as a whole, and it does not cancel a deny from another settings file. An allow rule also cannot beat a deny. Deleting the rule or pasting the file into CLAUDE.md are not exceptions. Doc idea: Permissions, gitignore negation.",
     "domains": [
       "Tools",
       "Memory/CLAUDE.md",
@@ -21244,7 +21244,7 @@
       },
       {
         "key": "C",
-        "text": "Add 'tests/.dat' to the .claudeignore file."
+        "text": "Add a permissions.deny rule such as Read(tests/**/*.dat) so file tools skip the fixtures. Tests can still run if Bash is allowed."
       },
       {
         "key": "D",
@@ -21252,7 +21252,7 @@
       }
     ],
     "answer": "C",
-    "explanation": ".claudeignore is the correct tool for excluding specific files from the agent's context window. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "Add a Read deny for the large data files, for example Read(tests/**/*.dat). Tests can still run via Bash if you allow that command; the deny stops the file tools. A 'Do not read' section in CLAUDE.md is not enforcement. There is no --no-context flag and no .claudeignore file. Deleting the fixtures breaks the tests. Doc idea: Permissions, Read deny rules.",
     "domains": [
       "Tools",
       "Memory/CLAUDE.md"
@@ -21286,7 +21286,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "Proper error handling in the tool-use loop allows agents to self-correct and recover from failures. Refer to: https://docs.anthropic.com/en/docs/build-with-claude/tool-use Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Proper error handling in the tool-use loop allows agents to self-correct and recover from failures. Refer to: https://docs.anthropic.com/en/docs/build-with-claude/tool-use.",
     "domains": [
       "Prompting",
       "Architecture"
@@ -21576,7 +21576,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "Ask for a quote from the transcript for each field so an invented value has nowhere to hide. Higher temperature and fake few-shots increase invention. A tip does not ground the answer. Doc idea: Prompt engineering, citations against the source.",
     "domains": [
       "Prompting"
     ],
@@ -21702,7 +21702,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "CLAUDE.md allows developers to guide the agent's creative and structural decisions for a specific repository. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "CLAUDE.md allows developers to guide the agent's creative and structural decisions for a specific repository.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -21733,7 +21733,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Claude Code natively respects standard Git hooks, and custom hooks are managed via '.claude/settings.json'. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "Claude Code natively respects standard Git hooks, and custom hooks are managed via '.claude/settings.json'.",
     "domains": [
       "Memory/CLAUDE.md",
       "Hooks"
@@ -21875,11 +21875,11 @@
   {
     "id": "s11-q40",
     "set": 11,
-    "stem": "A developer wants Claude Code to ignore all files ending in '.log' and all files in the 'build/' directory. Which '.claudeignore' content is correct?",
+    "stem": "A developer wants Claude Code to deny reads of every file ending in .log and everything in build/. Which permissions.deny rules are correct?",
     "choices": [
       {
         "key": "A",
-        "text": ".log build/"
+        "text": "Read(**/*.log) and Read(build/**)"
       },
       {
         "key": "B",
@@ -21895,7 +21895,7 @@
       }
     ],
     "answer": "A",
-    "explanation": ".claudeignore follows standard gitignore syntax for excluding files and directories. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization",
+    "explanation": "Deny rules take gitignore-style patterns inside the tool specifier, such as Read(**/*.log) and Read(build/**). A line that is only '.log build/' is not a settings entry. NO_READ and CLAUDE_EXCLUDE are not keys. Doc idea: Permissions, wildcard patterns.",
     "domains": [
       "Tools"
     ],
@@ -22120,7 +22120,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "Reliable automation should use standard software engineering practices like Git hooks to enforce quality standards. Refer to: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/customization Ref: https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching",
+    "explanation": "Reliable automation should use standard software engineering practices like Git hooks to enforce quality standards.",
     "domains": [
       "Memory/CLAUDE.md",
       "Hooks",
@@ -22255,7 +22255,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "CLAUDE.md files are the primary mechanism for providing persistent, project-specific context and constraints to Claude Code. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "CLAUDE.md files are the primary mechanism for providing persistent, project-specific context and constraints to Claude Code.",
     "domains": [
       "Memory/CLAUDE.md",
       "Prompting"
@@ -22713,7 +22713,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "Plan mode is a critical 'Human-in-the-Loop' (HITL) safety feature designed for 'Destructive' or 'Wide-Ranging' operations. By forcing the AI to generate a step-by-step strategy *before* executing any file writes or tool calls, the developer has the opportunity to audit the reasoning and catch potential side effects. This 'Think-Before-Act' pattern is essential for complex architectural changes where an incorrect assumption by the AI could lead to extensive manual cleanup. Architects should advise using Plan mode for any task that involves more than 3 files or changes to core interfaces, as it ensures the AI 'measures twice and cuts once.' Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Plan mode is a critical 'Human-in-the-Loop' (HITL) safety feature designed for 'Destructive' or 'Wide-Ranging' operations. By forcing the AI to generate a step-by-step strategy *before* executing any file writes or tool calls, the developer has the opportunity to audit the reasoning and catch potential side effects. This 'Think-Before-Act' pattern is essential for complex architectural changes where an incorrect assumption by the AI could lead to extensive manual cleanup. Architects should advise using Plan mode for any task that involves more than 3 files or changes to core interfaces, as it ensures the AI 'measures twice and cuts once.'.",
     "domains": [
       "Tools"
     ],
@@ -22842,7 +22842,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "Running agentic tools in ephemeral CI environments requires 'Deterministic Boundaries.' Unlike a local terminal where a human can wait, a CI job has a fixed cost and a hard timeout. The –max-turns flag is a vital architectural tool for 'Execution Control.' It limits the number of 'Reason-Act-Observe' loops the model can perform, preventing 'Agentic Loops' (where the AI gets stuck trying to fix a complex problem) from consuming the entire CI budget. As a best practice, architects should set a conservative –max-turns limit for automated reviews, ensuring that the tool provides a 'Best-Effort' analysis within the allotted time and budget. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Running agentic tools in ephemeral CI environments requires 'Deterministic Boundaries.' Unlike a local terminal where a human can wait, a CI job has a fixed cost and a hard timeout. The –max-turns flag is a vital architectural tool for 'Execution Control.' It limits the number of 'Reason-Act-Observe' loops the model can perform, preventing 'Agentic Loops' (where the AI gets stuck trying to fix a complex problem) from consuming the entire CI budget. As a best practice, architects should set a conservative –max-turns limit for automated reviews, ensuring that the tool provides a 'Best-Effort' analysis within the allotted time and budget.",
     "domains": [
       "Tools",
       "Memory/CLAUDE.md"
@@ -22877,7 +22877,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Professional CI/CD architectures follow the 'Decoupling Principle.' While it is tempting to want the AI tool to 'do everything,' a more robust and secure pattern is to have the AI perform the 'Reasoning' (analysis) and output the results in a 'Structured Format' (JSON). A separate, lightweight automation script (like a GitHub Action) then handles the 'Platform-Specific Integration' by posting those results to the API. This separation of concerns allows for easier testing, better security (you don't need to give the AI your GitHub credentials), and the ability to swap out the AI tool or the hosting platform without a total system redesign. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Professional CI/CD architectures follow the 'Decoupling Principle.' While it is tempting to want the AI tool to 'do everything,' a more robust and secure pattern is to have the AI perform the 'Reasoning' (analysis) and output the results in a 'Structured Format' (JSON). A separate, lightweight automation script (like a GitHub Action) then handles the 'Platform-Specific Integration' by posting those results to the API. This separation of concerns allows for easier testing, better security (you don't need to give the AI your GitHub credentials), and the ability to swap out the AI tool or the hosting platform without a total system redesign.",
     "domains": [
       "Tools",
       "Permissions"
@@ -22981,7 +22981,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Precision in tool calls is a hallmark of an expert agent. When navigating large repositories, using generic patterns (like **/*.js) can cause the tool to scan thousands of irrelevant files (like node_modules), consuming time and potentially hitting file limits. By 'Scoping the Search' (e.g., src/**/*.js), the developer (or the agent) provides a clear hint to the underlying system to ignore unrelated directories. This optimization reduces the 'Exploration Token Cost' and ensures the agent finds the relevant files faster, maintaining a cleaner and more efficient session context. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Precision in tool calls is a hallmark of an expert agent. When navigating large repositories, using generic patterns (like **/*.js) can cause the tool to scan thousands of irrelevant files (like node_modules), consuming time and potentially hitting file limits. By 'Scoping the Search' (e.g., src/**/*.js), the developer (or the agent) provides a clear hint to the underlying system to ignore unrelated directories. This optimization reduces the 'Exploration Token Cost' and ensures the agent finds the relevant files faster, maintaining a cleaner and more efficient session context.",
     "domains": [
       "Tools"
     ],
@@ -23046,7 +23046,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Efficient codebase navigation requires using 'High-Throughput' search tools. In a large project, reading files individually is the most expensive and slowest way to find information. The built-in 'Grep' tool allows the agent to scan thousands of files in a single turn, returning only the relevant 'Signal' (matching lines and filenames). This drastically reduces the number of tokens the model has to consume to find its goal. As a best practice, architects should prompt agents to 'Search before Reading,' ensuring they use Grep or Glob to narrow down their search space before performing high-fidelity file reads. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Efficient codebase navigation requires using 'High-Throughput' search tools. In a large project, reading files individually is the most expensive and slowest way to find information. The built-in 'Grep' tool allows the agent to scan thousands of files in a single turn, returning only the relevant 'Signal' (matching lines and filenames). This drastically reduces the number of tokens the model has to consume to find its goal. As a best practice, architects should prompt agents to 'Search before Reading,' ensuring they use Grep or Glob to narrow down their search space before performing high-fidelity file reads.",
     "domains": [
       "Tools",
       "Prompting"
@@ -23115,7 +23115,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "Isolation is the cornerstone of secure and deterministic CI/CD pipelines. When using AI agents that have the power to write files and execute shell commands, 'Session Pollution' is a significant risk. If an agent modifies a file in one job and that modification persists to the next, it can lead to 'Invisible Dependencies' and hard-to-debug failures. The standard architectural solution is 'Environment Ephemerality' using a fresh Docker container for every CI job. This ensures that every run starts from a 'Known Good' state, with no residual history, file changes, or credentials from previous executions. This is a core requirement for 'Reproducible AI Quality Gates.' Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Isolation is the cornerstone of secure and deterministic CI/CD pipelines. When using AI agents that have the power to write files and execute shell commands, 'Session Pollution' is a significant risk. If an agent modifies a file in one job and that modification persists to the next, it can lead to 'Invisible Dependencies' and hard-to-debug failures. The standard architectural solution is 'Environment Ephemerality' using a fresh Docker container for every CI job. This ensures that every run starts from a 'Known Good' state, with no residual history, file changes, or credentials from previous executions. This is a core requirement for 'Reproducible AI Quality Gates.'.",
     "domains": [
       "Tools",
       "Prompting"
@@ -23381,7 +23381,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "",
+    "explanation": "The billing subagent does not inherit the coordinator transcript (subagents: fresh context). VIP status mentioned only in the parent turn is invisible unless the delegation message includes it. allowedTools, prompt length, and schema are not why a fact in the parent history is missing. Doc idea: Subagents, what loads at startup.",
     "domains": [
       "Subagents",
       "Permissions",
@@ -23402,7 +23402,7 @@
     "choices": [
       {
         "key": "A",
-        "text": ".claudeignore"
+        "text": "permissions.deny with a Read rule such as Read(./.env.production)"
       },
       {
         "key": "B",
@@ -23418,7 +23418,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "Correct.",
+    "explanation": "Deny Read(./.env.production) in permissions. That blocks Read and also Edit/Write on the same path. .claudeignore is not a documented file. CLAUDE.md does not enforce. .gitignore changes what Grep skips by default; it does not stop Read of a known path. package.json does not hide files. Doc idea: Permissions, exclude sensitive files.",
     "domains": [
       "Memory/CLAUDE.md"
     ],
@@ -23437,7 +23437,7 @@
       },
       {
         "key": "B",
-        "text": "The -p (or --project) flag"
+        "text": "The -p / --print flag, which runs Claude Code non-interactively. It does not by itself limit the review to the git diff."
       },
       {
         "key": "C",
@@ -23449,7 +23449,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Correct.",
+    "explanation": "-p is --print, non-interactive mode for CI (CLI reference). It is not --project and it does not limit the review to the git diff. --output-format json shapes the result; it does not select the diff. The other flags are not real. To review a diff, tell the prompt to look at the diff, or use the /code-review skill in an interactive session. Doc idea: CLI reference, --print.",
     "domains": [
       "Tools"
     ],
@@ -23480,7 +23480,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "",
+    "explanation": "A PreToolUse hook can match Bash and deny a kill command (exit code 2 or permissionDecision deny) before it runs (hooks; permissions). A sandbox without a production network is stronger isolation, but the question is about blocking specific kill text while the session can still debug. A prompt does not block. Manual approval of every command is the default prompt, not a targeted check. Doc idea: Hooks, PreToolUse on Bash.",
     "domains": [
       "Tools",
       "Hooks",
@@ -23516,7 +23516,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "/clear starts an empty context and leaves files on disk (sessions; commands). /compact keeps a summary, so it does not reset. /exit ends the process. There is no /reset; /reset is an alias of /clear in the commands table, so the command that matches the stem is /clear. Doc idea: Commands, /clear.",
     "domains": [
       "Tools"
     ],
@@ -23547,7 +23547,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "",
+    "explanation": "Commit .claude/skills/ so the team gets the skill (skills: share skills, project location). A wiki or an email is not loaded. There is no global_config flag that distributes a workflow. Doc idea: Skills, project skills.",
     "domains": [
       "Skills"
     ],
@@ -23710,7 +23710,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Architectural consistency is managed through 'Ambient Context.' For project-wide constraints like styling libraries, state management, or API patterns, the CLAUDE.md file is the most efficient mechanism. By defining these rules once at the project root, you ensure that every time Claude Code reads a file or proposes a change, it aligns its suggestions with your technical stack. This eliminates the need for 'Instructional Bloat' in every turn and ensures that the AI behaves like a specialized senior developer for that specific codebase, rather than a general-purpose assistant. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Architectural consistency is managed through 'Ambient Context.' For project-wide constraints like styling libraries, state management, or API patterns, the CLAUDE.md file is the most efficient mechanism. By defining these rules once at the project root, you ensure that every time Claude Code reads a file or proposes a change, it aligns its suggestions with your technical stack. This eliminates the need for 'Instructional Bloat' in every turn and ensures that the AI behaves like a specialized senior developer for that specific codebase, rather than a general-purpose assistant.",
     "domains": [
       "Memory/CLAUDE.md",
       "Skills"
@@ -23778,7 +23778,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Claude is a 'Pattern-Aware' model. In large codebases, it will often prioritize existing code patterns (the 'Status Quo') over its internal knowledge or even explicit instructions in the system prompt. This is a common issue when a project has a mix of legacy and modern styles. To fix this 'Pattern Drift,' architects should use 'Negative Constraints' in the CLAUDE.md file (e.g., 'DO NOT use library X, use library Y instead') and ensure that high-fidelity examples of the *correct* pattern are easily accessible to the agent. Pruning the legacy code is the most durable solution, as it removes the 'distraction' from the model's search space. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Claude is a 'Pattern-Aware' model. In large codebases, it will often prioritize existing code patterns (the 'Status Quo') over its internal knowledge or even explicit instructions in the system prompt. This is a common issue when a project has a mix of legacy and modern styles. To fix this 'Pattern Drift,' architects should use 'Negative Constraints' in the CLAUDE.md file (e.g., 'DO NOT use library X, use library Y instead') and ensure that high-fidelity examples of the *correct* pattern are easily accessible to the agent. Pruning the legacy code is the most durable solution, as it removes the 'distraction' from the model's search space.",
     "domains": [
       "Memory/CLAUDE.md",
       "Prompting"
@@ -23941,7 +23941,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "Safety in AI-driven development requires 'Programmatic Enforcement.' While prompts and CLAUDE.md warnings are essential for guidance, they are probabilistic and can be bypassed in high-stress or complex scenarios. Implementing a 'Pre ToolUse' hook provides a deterministic boundary. By intercepting every command *before* it is executed in the shell, the hook acts as an automated security officer. If a forbidden command like 'npm publish' is detected, the hook can abort the operation immediately. This pattern is the gold standard for enterprise security, ensuring that the AI can be productive without the risk of accidental production deployments or data deletion. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Safety in AI-driven development requires 'Programmatic Enforcement.' While prompts and CLAUDE.md warnings are essential for guidance, they are probabilistic and can be bypassed in high-stress or complex scenarios. Implementing a 'Pre ToolUse' hook provides a deterministic boundary. By intercepting every command *before* it is executed in the shell, the hook acts as an automated security officer. If a forbidden command like 'npm publish' is detected, the hook can abort the operation immediately. This pattern is the gold standard for enterprise security, ensuring that the AI can be productive without the risk of accidental production deployments or data deletion.",
     "domains": [
       "Tools",
       "Memory/CLAUDE.md",
@@ -24010,7 +24010,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "The 'Power of the Shell' is a core productivity lever for agentic developers. While an agent *can* edit 1,000 files individually, it is the most inefficient pattern possible, requiring 1,000 separate turns and massive token costs. An advanced architect designs agents to 'Automate the Automation.' By giving the agent access to a Bash tool, you enable it to write and execute a single shell script (using 'sed', 'find', or 'perl') that performs the bulk update locally. This collapses 1,000 turns into a single 'Reason-and-Execute' turn, providing massive gains in speed, cost-efficiency, and reliability. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "The 'Power of the Shell' is a core productivity lever for agentic developers. While an agent *can* edit 1,000 files individually, it is the most inefficient pattern possible, requiring 1,000 separate turns and massive token costs. An advanced architect designs agents to 'Automate the Automation.' By giving the agent access to a Bash tool, you enable it to write and execute a single shell script (using 'sed', 'find', or 'perl') that performs the bulk update locally. This collapses 1,000 turns into a single 'Reason-and-Execute' turn, providing massive gains in speed, cost-efficiency, and reliability.",
     "domains": [
       "Tools",
       "Prompting"
@@ -24146,7 +24146,7 @@
       }
     ],
     "answer": "A",
-    "explanation": "Extending Claude Code through 'Agent Skills' is the primary way to create 'Repeatable Expert Workflows.' While CLAUDE.md provides context, Skills allow you to encapsulate complex, multi-step prompts and register them as first-class slash commands in the CLI. By placing these skill definitions in the '.claude/skills/' directory and checking them into Git, you can standardize documentation, testing, and refactoring patterns across your entire organization. This 'Config-as-Code' approach ensures that every developer can invoke sophisticated AI-driven tasks with a single command, significantly boosting team-wide productivity. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Extending Claude Code through 'Agent Skills' is the primary way to create 'Repeatable Expert Workflows.' While CLAUDE.md provides context, Skills allow you to encapsulate complex, multi-step prompts and register them as first-class slash commands in the CLI. By placing these skill definitions in the '.claude/skills/' directory and checking them into Git, you can standardize documentation, testing, and refactoring patterns across your entire organization. This 'Config-as-Code' approach ensures that every developer can invoke sophisticated AI-driven tasks with a single command, significantly boosting team-wide productivity.",
     "domains": [
       "Memory/CLAUDE.md",
       "Hooks",
@@ -24215,7 +24215,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Automated 'AI Quality Gates' must be 'Programmatically Actionable.' While Markdown or raw text is good for human consumption, it is brittle for automation. The –output-format json flag converts Claude's reasoning and findings into a structured machine-readable format. This allows CI/CD engineers to write scripts that can automatically fail a build, post-filtered comments to a PR, or aggregate security vulnerabilities into a dashboard. Architecting for 'Structured Output' is a fundamental requirement for building robust, automated AI pipelines that can be integrated into existing enterprise reporting systems. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Automated 'AI Quality Gates' must be 'Programmatically Actionable.' While Markdown or raw text is good for human consumption, it is brittle for automation. The –output-format json flag converts Claude's reasoning and findings into a structured machine-readable format. This allows CI/CD engineers to write scripts that can automatically fail a build, post-filtered comments to a PR, or aggregate security vulnerabilities into a dashboard. Architecting for 'Structured Output' is a fundamental requirement for building robust, automated AI pipelines that can be integrated into existing enterprise reporting systems.",
     "domains": [
       "Tools",
       "Prompting",
@@ -24312,7 +24312,7 @@
       }
     ],
     "answer": "B",
-    "explanation": "The CLAUDE.md file is the foundational 'Context Layer' for Claude Code. Unlike global settings, CLAUDE.md allows for 'Project-Specific Grounding.' It acts as the project's 'Standard Operating Procedures' (SOP), defining everything from the build system and test commands to architectural philosophies and forbidden libraries. By keeping this file at the root of the repository and checking it into version control, you ensure that every developer on the team and the AI itself operates from the same single source of truth. This pattern is essential for maintaining code quality and ensuring the AI's suggestions remain technically relevant as the project evolves. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "The CLAUDE.md file is the foundational 'Context Layer' for Claude Code. Unlike global settings, CLAUDE.md allows for 'Project-Specific Grounding.' It acts as the project's 'Standard Operating Procedures' (SOP), defining everything from the build system and test commands to architectural philosophies and forbidden libraries. By keeping this file at the root of the repository and checking it into version control, you ensure that every developer on the team and the AI itself operates from the same single source of truth. This pattern is essential for maintaining code quality and ensuring the AI's suggestions remain technically relevant as the project evolves.",
     "domains": [
       "Memory/CLAUDE.md",
       "Prompting"
@@ -24413,7 +24413,7 @@
       }
     ],
     "answer": "C",
-    "explanation": "Effective codebase navigation follows the 'Map-Before-Terrain' principle. For a developer or an agent, 'Brute-Force Reading' is a failing strategy that leads to context window bloat and reasoning degradation. The 'Exploration Workflow' starts with building a structural map using tools like 'ls -R' and 'Glob.' Once the structure is known, the agent should read 'High-Density Information' files like README.md, CLAUDE.md, or project.json. This tiered approach provides a high-fidelity architectural overview for a fraction of the token cost of reading raw source code, ensuring the model's reasoning capacity is saved for the actual development task. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "Effective codebase navigation follows the 'Map-Before-Terrain' principle. For a developer or an agent, 'Brute-Force Reading' is a failing strategy that leads to context window bloat and reasoning degradation. The 'Exploration Workflow' starts with building a structural map using tools like 'ls -R' and 'Glob.' Once the structure is known, the agent should read 'High-Density Information' files like README.md, CLAUDE.md, or project.json. This tiered approach provides a high-fidelity architectural overview for a fraction of the token cost of reading raw source code, ensuring the model's reasoning capacity is saved for the actual development task.",
     "domains": [
       "Tools",
       "Memory/CLAUDE.md",
@@ -24517,7 +24517,7 @@
       }
     ],
     "answer": "D",
-    "explanation": "In automated AI workflows, 'Safety is a Hardware-Level Gate.' While prompts are great for 'Policy,' they are not 'Enforcement.' A 'Pre ToolUse Hook' acts as a programmatic interceptor. By regex-matching the commands the AI generates *before* they hit the shell, the hook provides a 100% deterministic safeguard. If the agent attempts a 'destructive' action (like deleting a core file), the hook can block the call and return a clear 'Permission Denied' error to the model. This pattern ensures that even if the AI 'gets creative' or misunderstood the prompt, the physical integrity of the repository remains protected. Ref: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview",
+    "explanation": "In automated AI workflows, 'Safety is a Hardware-Level Gate.' While prompts are great for 'Policy,' they are not 'Enforcement.' A 'Pre ToolUse Hook' acts as a programmatic interceptor. By regex-matching the commands the AI generates *before* they hit the shell, the hook provides a 100% deterministic safeguard. If the agent attempts a 'destructive' action (like deleting a core file), the hook can block the call and return a clear 'Permission Denied' error to the model. This pattern ensures that even if the AI 'gets creative' or misunderstood the prompt, the physical integrity of the repository remains protected.",
     "domains": [
       "Tools",
       "Memory/CLAUDE.md",
@@ -34382,11 +34382,11 @@
   {
     "id": "s17-q30",
     "set": 17,
-    "stem": "You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.",
+    "stem": "You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.\n\nThe team is refactoring long cases into a coordinator that can delegate billing and returns investigation steps. During testing, a container crash mid-dispute causes the replacement worker to lose the verified customer ID, prior order findings, and a decision that the case must be escalated. The workers do not share a filesystem, and local session JSONL files are not reliably present after restart. What change best supports safe crash recovery?",
     "choices": [
       {
         "key": "A",
-        "text": "The team is refactoring long cases into a coordinator that can delegate billing and returns investigation steps. During testing, a container crash mid-dispute causes the replacement worker to lose the verified customer ID, prior order findings, and a decision that the case must be escalated. The workers do not share a filesystem, and local session JSONL files are not reliably present after restart. What change best supports safe crash recovery?"
+        "text": "Copy local JSONL transcript files opportunistically, then resume whichever session appears newest on the replacement worker."
       },
       {
         "key": "B",
@@ -34398,11 +34398,11 @@
       },
       {
         "key": "D",
-        "text": "Persist an application-defined JSON state manifest, then load it on restart and inject it into coordinator and subagent prompts. E Copy local JSONL transcript files opportunistically, then resume whichever session appears newest on the replacement worker."
+        "text": "Persist an application-defined JSON state manifest, then load it on restart and inject it into coordinator and subagent prompts."
       }
     ],
     "answer": "D",
-    "explanation": "",
+    "explanation": "Local JSONL transcripts are per machine (sessions: where transcripts are stored) and the stem says workers do not share a disk. Persist your own JSON state and inject it on startup. --continue cannot see a file that is gone. A stronger prompt does not restore a crashed process. Copying the newest JSONL is the race the stem rules out. Doc idea: Sessions, transcripts are local; application state is yours.",
     "domains": [
       "MCP",
       "Subagents",

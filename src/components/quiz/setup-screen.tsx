@@ -140,6 +140,7 @@ export function SetupScreen({
   onUnlockDebugPro,
   onResumeSession,
   onDiscardResume,
+  onOpenGuide,
 }: {
   config: SetupConfig;
   onChange: (next: SetupConfig) => void;
@@ -150,6 +151,7 @@ export function SetupScreen({
   onUnlockDebugPro: (enabled: boolean) => void;
   onResumeSession?: () => void;
   onDiscardResume?: () => void;
+  onOpenGuide?: () => void;
 }) {
   const [tagQuery, setTagQuery] = useState("");
   const pool = useMemo(() => filterPool(config), [config]);
@@ -357,6 +359,30 @@ export function SetupScreen({
             </ol>
           </CardContent>
         </Card>
+
+        {onOpenGuide && (
+          <Card className="border-copper/25 bg-card/95 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <BookOpen className="size-4 text-copper" />
+                Docs guide
+              </CardTitle>
+              <CardDescription>
+                Official Claude Code, Agent SDK, and MCP pages, grouped like the quiz.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 w-full rounded-full sm:w-auto"
+                onClick={onOpenGuide}
+              >
+                Open docs guide
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Theme coverage progress panel */}
         <ProgressPanel
