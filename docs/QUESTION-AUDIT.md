@@ -123,3 +123,36 @@ At least three long items per domain were read. Keys below were not flipped. Hoo
 - s4-q26 D still says 'full multi-turn agentic loops'. The batches page does run a server-side agentic loop and accepts multi-turn messages, so D is the true option next to B. The explanation says a `pause_turn` result needs a follow-up request and that each request stays independent.
 - s2-q27 A says the window 'requires' 24 hours. Most batches finish in under an hour; 24 hours is the expiration. A is the listed constraint. The explanation says so.
 
+
+## Second pass — 2026-09-18
+
+Pattern scan covered all 1,078 items again. This pass did not re-read every stem. Concrete checks used pages fetched this pass:
+
+- https://code.claude.com/docs/en/hooks (command hooks get JSON on stdin; `tool_input.command`; exit 2 blocks PreToolUse; PostToolUse exit 2 does not undo a call that already ran; no `CLAUDE_TOOL_NAME`)
+- https://code.claude.com/docs/en/agent-sdk/agent-loop (`allowedTools` auto-approves only; `maxTurns` / `maxBudgetUsd`; PostToolUse cannot block)
+- Subagents and permissions pages (search, same day): `AgentDefinition.tools` and a bare `disallowedTools` name remove tools. `allowedTools` does not. The spawn tool is `Agent`; `Task` remains a documented alias, so Task-named keys were left.
+
+### New key flips
+
+- `s2-q37` A → C. The stem configures `allowedTools`. That list does not make other tools fail at runtime. Doc: agent loop, tool permissions.
+- `s7-q3` C → A. The marked snippet used `CLAUDE_TOOL_NAME` / `CLAUDE_TOOL_ARG_COMMAND`, which the hooks reference does not define. A is the PreToolUse block. Doc: hooks.
+- `s15-q9` D → E. Parser had merged choice E (and "Answer: E") into D. E keeps execution errors as `isError` tool results with retry metadata. D's JSON-RPC codes are for protocol errors.
+
+### Choice repairs, key kept
+
+- `s2-q16`, `s2-q31`, `s2-q44`, `s4-q12`, `s5-q46`: marked text now says `tools` / `disallowedTools`, not that `allowedTools` removes tools.
+- `s9-q51` B rewritten to read `.tool_input.command` from stdin and `exit 2`. No other choice was the real hook.
+- `s15-q9` restored choice E; B was leaked commentary and is now a short wrong option.
+
+### Pattern scan vs full read
+
+- Scanned every item for `.claudeignore` as the marked control, PostToolUse blocking, batches-cannot-use-tools, 5-minute max cache TTL, `/status` shows the diff, `allowedTools` removes tools, a Monitor class, blank or "Correct." explanations, Refer-to / Google-search citations, and parser-merged choices.
+- Zero remaining marked hits for ignore-as-feature, PostToolUse-blocks, batch-cannot-tools, 5-minute maximum TTL, status-shows-diff, Monitor class, or thin explanations.
+- 299 explanations lost a trailing `Refer to` URL or a quoted `Search for "…"`. Teaching text before that tail was kept. `s1-q9` style "search for import statements" was not cut.
+- Fully read this pass: the `allowedTools` cluster (`s2-q16`, `s2-q31`, `s2-q37`, `s2-q44`, `s4-q12`, `s5-q46`), the hook-snippet pair (`s7-q3`, `s9-q51`), and the merged `s15-q9`. Sets were not opened item-by-item. Judgment and scenario keys were left unless a fetched page contradicted the marked choice.
+
+### Still uncertain
+
+- `Task` vs `Agent`: docs still call `Task(...)` an alias. Keys that say Task were not flipped.
+- Cache minimum token counts, `error.type` (`s10-q60`), and model output limits were not re-fetched.
+- Most long scenario keys in sets 13–18 were pattern-scanned, not re-keyed.

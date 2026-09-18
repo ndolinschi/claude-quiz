@@ -144,3 +144,7 @@
     font-family: var(--font-fraunces), ui-serif, Georgia, serif;
   }
 }
+html[data-tg="1"] body {
+  background-image: none;
+  background-color: var(--background);
+}

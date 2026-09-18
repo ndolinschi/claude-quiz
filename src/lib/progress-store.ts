@@ -40,6 +40,45 @@ export type ProgressStore = {
 export const STORAGE_KEY = "claude-quiz-lab-v1";
 export const FREE_DAILY_LIMIT = 50;
 
+let scopedUserId: string | null = null;
+
+export function progressStorageKey(): string {
+  return scopedUserId ? `${STORAGE_KEY}:tg:${scopedUserId}` : STORAGE_KEY;
+}
+
+function readTelegramUserId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const app = window.Telegram?.WebApp;
+    if (!app) return null;
+    const platform = String(app.platform || "").toLowerCase();
+    const inside =
+      Boolean(app.initData) || (platform !== "" && platform !== "unknown");
+    const id = app.initDataUnsafe?.user?.id;
+    if (inside && id != null) return String(id);
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function adoptTelegramScope(): void {
+  if (scopedUserId) return;
+  const id = readTelegramUserId();
+  if (id) scopedUserId = id;
+}
+
+/** Two Telegram users on one device do not share a progress blob. */
+export function scopeProgressToTelegramUser(
+  userId: string | number | null | undefined
+): void {
+  const next = userId == null || userId === "" ? null : String(userId);
+  if (next === scopedUserId && cachedStore) return;
+  scopedUserId = next;
+  cachedStore = loadProgressStore();
+  for (const listener of listeners) listener();
+}
+
 /**
  * Returns local YYYY-MM-DD string for daily rollover
  */
@@ -82,7 +121,7 @@ export function subscribeProgressStore(listener: () => void): () => void {
   listeners.add(listener);
 
   function handleStorage(e: StorageEvent) {
-    if (e.key === STORAGE_KEY) {
+    if (e.key === progressStorageKey()) {
       cachedStore = loadProgressStore();
       listener();
     }
@@ -109,8 +148,9 @@ export function loadProgressStore(): ProgressStore {
   if (typeof window === "undefined") {
     return createInitialStore();
   }
+  adoptTelegramScope();
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(progressStorageKey());
     if (!raw) {
       return createInitialStore();
     }
@@ -164,7 +204,7 @@ export function saveProgressStore(store: ProgressStore): void {
   cachedStore = store;
   if (typeof window !== "undefined") {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+      localStorage.setItem(progressStorageKey(), JSON.stringify(store));
     } catch {
       // Soft degrade - silently retain in-memory state
     }

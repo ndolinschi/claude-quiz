@@ -18,6 +18,11 @@ import { useCountdown } from "@/hooks/use-countdown";
 import { formatClock, type SetupConfig } from "@/lib/quiz";
 import type { Question } from "@/data/types";
 import { cn } from "@/lib/utils";
+import {
+  useTelegram,
+  useTelegramBackButton,
+  useTelegramMainButton,
+} from "@/hooks/use-telegram";
 
 export function SessionScreen({
   items,
@@ -88,6 +93,32 @@ export function SessionScreen({
     onNext();
   }, [instant, onNext, onSubmitAnswer, question, revealed, selected]);
 
+  const tg = useTelegram();
+  const mainLabel = instant
+    ? revealed
+      ? last
+        ? "Results"
+        : "Next"
+      : "Submit"
+    : last
+      ? "Results"
+      : "Next";
+  useTelegramMainButton(
+    {
+      text: mainLabel,
+      enabled: instant ? Boolean(selected) || revealed : true,
+      onClick: () => {
+        tg.haptic("impact");
+        submitOrAdvance();
+      },
+    },
+    tg.booted
+  );
+  useTelegramBackButton(() => {
+    tg.haptic("warning");
+    setCancelOpen(true);
+  }, tg.booted);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement | null)?.tagName;
@@ -121,7 +152,7 @@ export function SessionScreen({
   const answeredCount = Object.keys(answers).length;
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col overflow-x-hidden px-3 pt-3 sm:px-4 sm:pt-5">
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-hidden px-3 pt-[max(0.5rem,env(safe-area-inset-top))]">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span className="font-mono text-xs tabular-nums text-muted-foreground">
@@ -149,13 +180,11 @@ export function SessionScreen({
             {timerLabel}
           </span>
           <Button
-            variant="ghost"
-            size="sm"
-            className="h-9 px-2.5 text-muted-foreground hover:text-foreground"
+            variant="outline"
+            className="h-11 rounded-xl px-3"
             onClick={() => setCancelOpen(true)}
           >
-            <X className="size-3.5" />
-            <span className="hidden sm:inline">Cancel</span>
+            Cancel
           </Button>
         </div>
       </div>
@@ -190,7 +219,7 @@ export function SessionScreen({
         </DialogContent>
       </Dialog>
 
-      <Card className="mb-3 flex-1 overflow-hidden bg-card/95 shadow-sm">
+      <Card className="mb-3 flex-1 overflow-hidden border-0 bg-transparent shadow-none">
         <CardContent className="px-3.5 pt-1 pb-4 sm:px-5">
           <p className="font-heading text-[1.05rem] leading-relaxed text-pretty break-words text-ink sm:text-xl">
             {question.stem}
@@ -222,7 +251,7 @@ export function SessionScreen({
                   disabled={revealed}
                   onClick={() => onSelect(question.id, choice.key)}
                   className={cn(
-                    "flex w-full min-h-14 items-start gap-3 rounded-2xl border px-3.5 py-3.5 text-left transition-all sm:min-h-12 sm:px-4",
+                    "flex w-full min-h-16 items-start gap-3 rounded-2xl border px-3.5 py-3.5 text-left text-base transition-all",
                     "focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
                     "active:scale-[0.99]",
                     !showMark &&
@@ -294,16 +323,27 @@ export function SessionScreen({
         </CardContent>
       </Card>
 
-      <div className="sticky bottom-0 z-10 -mx-3 mt-auto border-t border-border/50 bg-background/90 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:-mx-4 sm:px-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="hidden text-xs text-muted-foreground sm:block">
-            A–D to choose · Enter to{" "}
-            {instant ? (revealed ? "continue" : "submit") : "continue"}
-          </p>
+      <div className={cn(
+        "sticky bottom-0 z-10 -mx-3 mt-auto border-t border-border/50 bg-background/95 px-3 pt-3 backdrop-blur-md",
+        tg.inTelegram
+          ? "pb-[max(5.5rem,env(safe-area-inset-bottom))]"
+          : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+      )}>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="h-14 rounded-2xl px-4"
+            onClick={() => setCancelOpen(true)}
+          >
+            Cancel
+          </Button>
           <Button
             size="lg"
-            className="h-12 w-full rounded-full px-6 text-base font-semibold sm:ml-auto sm:w-auto sm:min-w-40"
-            onClick={submitOrAdvance}
+            className="h-14 flex-1 rounded-2xl px-6 text-base font-semibold"
+            onClick={() => {
+              tg.haptic("impact");
+              submitOrAdvance();
+            }}
             disabled={instant ? !selected && !revealed : false}
           >
             {instant

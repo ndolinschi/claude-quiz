@@ -14,6 +14,7 @@ import {
 } from "@/lib/quiz";
 import type { Question } from "@/data/types";
 import { cn } from "@/lib/utils";
+import { useTelegram, useTelegramBackButton } from "@/hooks/use-telegram";
 
 export function ResultsScreen({
   items,
@@ -54,6 +55,8 @@ export function ResultsScreen({
     [answers, items]
   );
   const [openId, setOpenId] = useState<string | null>(misses[0]?.id ?? null);
+  const tg = useTelegram();
+  useTelegramBackButton(onSetup, tg.booted);
 
   const tone =
     stats.percent >= 80
@@ -63,7 +66,7 @@ export function ResultsScreen({
         : "destructive";
 
   return (
-    <div className="mx-auto w-full max-w-2xl overflow-x-hidden px-4 py-8 sm:py-12">
+    <div className="mx-auto w-full max-w-md overflow-x-hidden px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-16">
       <header className="mb-8 text-center">
         <p className="mb-2 font-mono text-[11px] tracking-[0.28em] text-copper uppercase">
           Session complete

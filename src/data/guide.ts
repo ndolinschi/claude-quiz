@@ -185,3 +185,22 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     ],
   },
 ];
+
+/** Fetched 2026-09-18. Each URL returned its named page, not a 404. Links only — this app does not copy their questions. */
+export const EXTERNAL_PRACTICE: GuideLink[] = [
+  {
+    title: "CertSafari",
+    what: "Free mixed practice for Claude Certified Architect – Foundations.",
+    href: "https://www.certsafari.com/anthropic/claude-certified-architect-foundations",
+  },
+  {
+    title: "PrepGenAI Certs",
+    what: "A course that walks the five official CCA-F domains.",
+    href: "https://prepgenaicerts.com/courses/claude-certified-architect-foundations",
+  },
+  {
+    title: "Claude Certification Guide",
+    what: "Timed mock: a short sitting or the full 60-question pace.",
+    href: "https://claudecertificationguide.com/mock-exam",
+  },
+];

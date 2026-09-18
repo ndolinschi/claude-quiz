@@ -9,11 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { GUIDE_SECTIONS } from "@/data/guide";
+import { EXTERNAL_PRACTICE, GUIDE_SECTIONS } from "@/data/guide";
+import { useTelegram, useTelegramBackButton } from "@/hooks/use-telegram";
 
 export function GuideScreen({ onBack }: { onBack: () => void }) {
+  const tg = useTelegram();
+  useTelegramBackButton(onBack, tg.booted);
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pb-16 pt-6 sm:pt-10">
+    <div className="mx-auto w-full max-w-md px-4 pb-16 pt-[max(1rem,env(safe-area-inset-top))]">
       <div className="mb-5 flex items-center gap-2">
         <Button
           type="button"
@@ -60,6 +63,30 @@ export function GuideScreen({ onBack }: { onBack: () => void }) {
           </p>
         </CardContent>
       </Card>
+
+
+      <section className="mb-4">
+        <h2 className="mb-2 text-sm font-semibold">More practice</h2>
+        <div className="grid gap-2">
+          {EXTERNAL_PRACTICE.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              target="_blank"
+              rel="noreferrer"
+              className="block min-h-14 rounded-2xl border border-border bg-card px-3 py-3"
+            >
+              <span className="flex items-center justify-between gap-2 text-sm font-semibold">
+                {link.title}
+                <ExternalLink className="size-3.5 shrink-0 text-copper" />
+              </span>
+              <span className="mt-1 block text-sm text-muted-foreground">
+                {link.what}
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
 
       <div className="grid gap-3.5">
         {GUIDE_SECTIONS.map((section) => (
